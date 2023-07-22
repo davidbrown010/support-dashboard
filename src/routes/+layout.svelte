@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import '$lib/scss/styles.scss';
 	// import Analytics from '$lib/seo/analytics.svelte';
 </script>
