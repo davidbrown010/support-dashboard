@@ -1,0 +1,105 @@
+@use './vars.scss';
+@import url('https://use.typekit.net/puv0mke.css');
+@import './font-awesome/fontawesome.scss';
+@import './font-awesome/solid.scss';
+@import './font-awesome/regular.scss';
+@import './loops.scss';
+@import './customFullScreenPlayerStyles.scss';
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+html {
+	background-color: vars.$color-theme-white;
+}
+
+body {
+	min-height: 100vh;
+	background-color: vars.$color-theme-white;
+	color: vars.$color-text-dark;
+	font-family: vars.$font-display;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.app {
+	position: relative;
+	height: inherit;
+	max-width: vars.$max-stretch-width;
+	width: 100%;
+}
+
+main {
+
+}
+
+section {
+	margin-bottom: clamp(100px, 12vw, 200px);
+}
+
+button {
+	border: none;
+	outline: none;
+	cursor: pointer;
+	font-family: vars.$font-display;
+}
+a {
+	text-decoration: none;
+	color: vars.$color-theme-black;
+}
+
+h1 {
+	font-weight: vars.$font-display-medium
+}
+
+h3 {
+	font-weight: vars.$font-display-roman
+}
+
+p {
+	font-weight: vars.$font-display-light
+}
+
+ul,
+ul li,
+ul ul li {
+   margin:0;
+   padding: 0;
+   text-indent: 0;
+   list-style-type: 0;
+   list-style: none;
+}
+
+/* width */
+::-webkit-scrollbar {
+	width: 7px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+	background: transparent; 
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+	background: #d3d3ce; 
+	border-radius: 20px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+	background: #b9b9b4; 
+}
+
+img:not([src*=".png"]) {
+	background-color: #b3b3b3;
+}
+
+body.lockScroll {
+	height: 100%;
+	overflow-y: hidden;
+}

@@ -1,0 +1,9 @@
+@use './vars.scss';
+
+//MIXINS 
+@mixin txt-white {
+	color: vars.$color-theme-white;
+}
+@mixin txt-black {
+	color: vars.$color-theme-black;
+}

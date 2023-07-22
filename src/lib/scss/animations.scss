@@ -1,0 +1,13 @@
+//MIXINS
+
+.transition {
+    transition: transform .25s ease-out;
+}
+
+@mixin hover-grow {
+    @extend .transition;
+
+    &:hover {
+        transform: scale(1.05)
+    }
+}

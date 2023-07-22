@@ -1,0 +1,27 @@
+//LOOPS
+@use './vars.scss';
+
+$colors-list: (
+	"red": vars.$color-theme-red,
+	"orange": vars.$color-theme-orange,
+	"yellow": vars.$color-theme-yellow,
+	"green": vars.$color-theme-green,
+	"teal": vars.$color-theme-teal,
+	"cyan": vars.$color-theme-cyan,
+	"blue": vars.$color-theme-blue,
+	"purple": vars.$color-theme-purple,
+	"white": vars.$color-theme-white,
+	"black": vars.$color-theme-black
+);
+
+@each $key, $val in $colors-list {
+	.bg-#{$key} {
+		background-color: #{$val};
+	}
+}
+
+@each $key, $val in $colors-list {
+	.txt-#{$key} {
+		color: #{$val};
+	}
+}

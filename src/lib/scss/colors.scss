@@ -1,0 +1,33 @@
+@use './vars.scss';
+
+//MIXINS 
+@mixin bg-red {
+	background-color: vars.$color-theme-red;
+}
+@mixin bg-orange {
+	background-color: vars.$color-theme-orange;
+}
+@mixin bg-yellow {
+	background-color: vars.$color-theme-yellow;
+}
+@mixin bg-green {
+	background-color: vars.$color-theme-green;
+}
+@mixin bg-teal {
+	background-color: vars.$color-theme-teal;
+}
+@mixin bg-cyan {
+	background-color: vars.$color-theme-cyan;
+}
+@mixin bg-blue {
+	background-color: vars.$color-theme-blue;
+}
+@mixin bg-purple {
+	background-color: vars.$color-theme-purple;
+}
+@mixin bg-white {
+	background-color: vars.$color-theme-white;
+}
+@mixin bg-black {
+	background-color: vars.$color-theme-black;
+}

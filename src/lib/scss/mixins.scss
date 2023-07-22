@@ -1,0 +1,8 @@
+//MIXINS
+@mixin circle {
+	border-radius: 50%;
+}
+@mixin centerSingleItem {
+	display: grid !important;
+	place-items: center;
+}

@@ -1,0 +1,87 @@
+.confettiPiece {
+    transform-origin: center center;
+    width: clamp(10px, 1.5vw, 20px);
+    height: clamp(30px, 5vw, 60px);
+    position: absolute;
+    left: 50%;
+}
+.confetti-0 {
+    animation: confettiFall 1.5s linear forwards, confettiShake 1s ease-in-out 2;
+}
+.confetti-1 {
+    animation: confettiFall 2s linear forwards, confettiShake 1s ease-in-out 2;
+}
+.confetti-2 {
+    animation: confettiFall 1.5s linear forwards, confettiShakeInvert 1s ease-in-out 2;
+}
+.confetti-3 {
+    animation: confettiFall 2s linear forwards, confettiShakeInvert 1s ease-in-out 2;
+}
+.confetti-4 {
+    animation: confettiFall 1.5s linear forwards, confettiShake2 1s ease-in-out 2;
+}
+.confetti-5 {
+    animation: confettiFall 2s linear forwards, confettiShake2 1s ease-in-out 2;
+}
+.confetti-6 {
+    animation: confettiFall 1.5s linear forwards, confettiShakeInvert2 1s ease-in-out 2;
+}
+.confetti-7 {
+    animation: confettiFall 2s linear forwards, confettiShakeInvert2 1s ease-in-out 2;
+}
+
+
+@keyframes confettiFall {
+    from {
+        top: -100px;
+    }
+    to {
+        top: calc(100% + 30px);
+    }
+}
+@keyframes confettiShake {
+    0% {
+        transform: translateX(-40px) rotate(15deg);
+    }
+    50% {
+        transform: translateX(40px) rotate(-15deg);
+    }
+    100% {
+        transform: translateX(-40px) rotate(15deg);
+    }
+}
+
+@keyframes confettiShakeInvert {
+    0% {
+        transform: translateX(40px) rotate(-15deg);
+    }
+    50% {
+        transform: translateX(-40px) rotate(15deg);
+    }
+    100% {
+        transform: translateX(40px) rotate(-15deg);
+    }
+}
+@keyframes confettiShake2 {
+    0% {
+        transform: translateX(-20px) rotate(15deg);
+    }
+    50% {
+        transform: translateX(20px) rotate(-15deg);
+    }
+    100% {
+        transform: translateX(-20px) rotate(15deg);
+    }
+}
+
+@keyframes confettiShakeInvert2 {
+    0% {
+        transform: translateX(20px) rotate(-15deg);
+    }
+    50% {
+        transform: translateX(-20px) rotate(15deg);
+    }
+    100% {
+        transform: translateX(20px) rotate(-15deg);
+    }
+}
