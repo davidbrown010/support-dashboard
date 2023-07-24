@@ -1,6 +1,6 @@
-<script>
+<script lang="ts">
 
-    export let url
+    export let url: string
     export let type = "external"
     export let colorMode = "constant"
 

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import '$lib/scss/styles.scss';
-	// import Analytics from '$lib/seo/analytics.svelte';
 </script>
 
 <div class="app">
@@ -13,6 +12,5 @@
 <style lang="scss">
 	main {
 		position: relative;
-		// scroll-snap-type: y mandatory;
 	}
 </style>

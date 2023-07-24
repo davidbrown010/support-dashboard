@@ -1,6 +1,6 @@
-<script>
-    export let url
-    export let activeColor
+<script lang="ts">
+    export let url: string
+    export let activeColor: string
 </script>
 
 <a href="{url}" class="bg-{activeColor}" data-sveltekit-preload-data="hover">
@@ -20,6 +20,7 @@
         font-size: clamp(0.55rem, 1.33vw + .33rem, 1rem);
         border-radius: 1000px;
         transition: transform .5s ease, color .5s ease;
+        width: min-content;
 
         &:hover {
             transform: scale(1.05);
