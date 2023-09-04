@@ -2,14 +2,25 @@
 // for information about these interfaces
 declare global {
 	namespace App {
-		// interface Error {}
-		// interface Locals {}
-		// interface PageData {}
-		// interface Platform {}
+		interface Locals {
+			auth: import("lucia").AuthRequest;
+			user: Lucia.DatabaseUserAttributes & { userId: string }
+		}
 	}
 	interface Window {
         dataLayer:any;
     }
+
+	/// <reference types="lucia" />
+	namespace Lucia {
+		type Auth = import("$lib/server/auth/lucia").Auth;
+		type DatabaseUserAttributes = {
+            username: string,
+            firstName: string,
+            lastName: string
+		};
+		type DatabaseSessionAttributes = {};
+	}
 }
 
 export {};

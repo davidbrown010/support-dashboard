@@ -9,6 +9,10 @@
 donors
 <HrefButton url="/" activeColor="cyan">Home</HrefButton>
 
-{#each data?.donors as donor}
-    {donor}
-{/each}
+{#await data.streaming.donors}
+   Loading... 
+{:then donors} 
+    {#each donors as donor}
+        {donor.firstName + " " + donor.lastName}<br>
+    {/each}
+{/await}

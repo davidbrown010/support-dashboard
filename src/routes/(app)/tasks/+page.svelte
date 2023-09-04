@@ -1,14 +1,18 @@
 <script lang="ts">
+	import HrefButton from '$lib/components/common/HrefButton.svelte';
 
-    import HrefButton from '$lib/components/common/HrefButton.svelte';
     import type { PageData } from './$types';
 
     export let data: PageData;
 
 </script>
 tasks
-<HrefButton url="/" activeColor="green">Home</HrefButton>
+<HrefButton url="/" activeColor="cyan">Home</HrefButton>
 
-{#each data?.tasks as task}
-    {task}
-{/each}
+{#await data.streaming.tasks}
+   Loading... 
+{:then tasks} 
+    {#each tasks as task}
+        {task.taskName}<br>
+    {/each}
+{/await}

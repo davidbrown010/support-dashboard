@@ -4,6 +4,10 @@ import type { PageServerLoad } from './$types';
 
 export const load = (async ({  }) => {
     
-    return { tasks: getAllTasks() };
+    return { 
+        streaming: {
+            tasks: getAllTasks() 
+        }
+    };
 
 }) satisfies PageServerLoad;

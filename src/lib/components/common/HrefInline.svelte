@@ -1,21 +1,24 @@
 <script lang="ts">
 
     export let url: string
-    export let type = "external"
-    export let colorMode = "constant"
+    export let icon: Icon = "external"
+    export let colorMode: ColorMode = "constant"
 
-    const types = {
+    type Icon = "page" | "external" | "tel" | "email"
+    type ColorMode = "constant" | "colorless"
+
+    const iconFA_Codes = {
         page: "fa-regular fa-file-lines",
         external: "fa-solid fa-arrow-up",
         tel: "fa-solid fa-phone",
         email: "fa-regular fa-envelope"
     }
 
-    $: icon = types[type]
+    $: iconFA_SelectedCode = iconFA_Codes[icon]
 
 </script>
 
-<a href="{url}" class="{type} {colorMode != "constant" ? "colorless" : ""}" target="{type=="external" ? "_blank" : "" }" data-sveltekit-preload-data="hover"><slot/><i class="{icon}"></i></a>
+<a href="{url}" class="{icon} {colorMode != "constant" ? "colorless" : ""}" target="{icon=="external" ? "_blank" : "" }" data-sveltekit-preload-data="hover"><slot/><i class="{iconFA_SelectedCode}"></i></a>
 
 <style lang="scss">
     @use '$lib/scss/vars.scss';
