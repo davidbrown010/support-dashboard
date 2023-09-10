@@ -1,9 +1,11 @@
 <script lang="ts">
 	import HrefInline from "$lib/components/common/HrefInline.svelte";
+    import TextInput from "$lib/components/formElements/TextInput.svelte";
     import { superForm } from "sveltekit-superforms/client";
     import type { PageData } from "./$types";
 
     import { page } from '$app/stores';
+	import SubmitInput from "$lib/components/formElements/SubmitInput.svelte";
 
     $: urlMessage = $page.url.searchParams.get('message');
     
@@ -13,17 +15,49 @@
 
 </script>
 
-<h1>Log In</h1>
-{#if urlMessage}<small>{urlMessage}</small>{/if}
-<form method="post" use:enhance>
-    <label for="username">Username</label>
-	<input name="username" id="username" bind:value={$form.username} {...$constraints.username}/><br/>
-    {#if $errors.username}<small>{$errors.username}</small>{/if}
+<div class="container">
+    <div class="centerWrapper">
+        <h1>Log In</h1>
+        {#if urlMessage}<small>{urlMessage}</small>{/if}
+        <form method="post" use:enhance>
 
-	<label for="password">Password</label>
-	<input type="password" name="password" id="password" bind:value={$form.password} {...$constraints.password}/><br/>
-    {#if $errors.password}<small>{$errors.password}</small>{/if}
+            <TextInput inputType="text" labelText="username" bind:inputValue={$form.username} additionalAttributes={$constraints.username} errors={$errors.username}/>
+            <TextInput inputType="password" labelText="password" bind:inputValue={$form.password} additionalAttributes={$constraints.password} errors={$errors.password}/>
 
-	<input type="submit" />
-</form>
-<HrefInline url={"/register"} icon={"page"}>Register</HrefInline>
+            <SubmitInput activeColor="cyan" buttonText="Login"/>
+        </form>
+    </div>
+    <div class="registerWrapper">
+        <span>Don't have an account? </span><HrefInline url={"/register"} icon={"page"}>Sign Up</HrefInline>
+    </div>
+</div>
+
+<style lang="scss">
+    @use "$lib/scss/mixins.scss";
+
+    .container {
+        height: 100vh;
+        @include mixins.centerSingleItem;
+
+        .centerWrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+
+            form {
+                display: inherit;
+                flex-direction: inherit;
+                align-items: left;
+                gap: inherit;
+                
+                
+            }
+        }
+        .registerWrapper {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+        }
+    }
+</style>

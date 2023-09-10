@@ -25,3 +25,9 @@ $colors-list: (
 		color: #{$val};
 	}
 }
+
+@each $key, $val in $colors-list {
+	.border-bottom-#{$key} {
+		border-bottom-color: #{$val};
+	}
+}

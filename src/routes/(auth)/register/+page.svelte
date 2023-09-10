@@ -3,30 +3,59 @@
     import { superForm } from "sveltekit-superforms/client";
     import type { PageData } from "./$types";
     
-    export let data: PageData
+    export let data: PageData    
 
     const { form, errors, enhance, constraints } = superForm(data.form)
 
+    import TextInput from "$lib/components/formElements/TextInput.svelte";
+    import SubmitInput from "$lib/components/formElements/SubmitInput.svelte";
+
 </script>
 
-<h1>Sign up</h1>
-<form method="post" use:enhance>
-    <label for="firstName">First Name</label>
-	<input name="firstName" id="firstName" bind:value={$form.firstName} {...$constraints.firstName}/><br/>
-    {#if $errors.firstName}<small>{$errors.firstName}</small>{/if}
+<div class="container">
+    <div class="centerWrapper">
+        <h1>Sign Up</h1>
+        <form method="post" use:enhance>
 
-    <label for="lastName">Last Name</label>
-	<input name="lastName" id="lastName" bind:value={$form.lastName} {...$constraints.lastName}/><br/>
-    {#if $errors.lastName}<small>{$errors.lastName}</small>{/if}
+            <TextInput inputType="text" labelText="first name" bind:inputValue={$form.firstName} additionalAttributes={$constraints.firstName} errors={$errors.firstName}/>
+            <TextInput inputType="text" labelText="last name" bind:inputValue={$form.lastName} additionalAttributes={$constraints.lastName} errors={$errors.lastName}/>
+            <TextInput inputType="text" labelText="username" bind:inputValue={$form.username} additionalAttributes={$constraints.username} errors={$errors.username}/>
+            <TextInput inputType="password" labelText="password" bind:inputValue={$form.password} additionalAttributes={$constraints.password} errors={$errors.password}/>
 
-	<label for="username">Username</label>
-	<input name="username" id="username" bind:value={$form.username} {...$constraints.username}/><br/>
-    {#if $errors.username}<small>{$errors.username}</small>{/if}
+            <SubmitInput activeColor="cyan" buttonText="Register"/>
+        </form>
+    </div>
+    <div class="signInWrapper">
+        <span>Already have an account? </span><HrefInline url={"/login"} icon={"page"}>Login</HrefInline>
+    </div>
+</div>
 
-	<label for="password">Password</label>
-	<input type="password" name="password" id="password" bind:value={$form.password} {...$constraints.password}/><br/>
-    {#if $errors.password}<small>{$errors.password}</small>{/if}
+<style lang="scss">
+    @use "$lib/scss/mixins.scss";
 
-	<input type="submit" />
-</form>
-<HrefInline url={"/login"} icon={"page"}>Login</HrefInline>
+    .container {
+        height: 100vh;
+        @include mixins.centerSingleItem;
+
+        .centerWrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+
+            form {
+                display: inherit;
+                flex-direction: inherit;
+                align-items: left;
+                gap: inherit;
+                
+                
+            }
+        }
+        .signInWrapper {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+        }
+    }
+</style>

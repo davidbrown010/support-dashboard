@@ -74,6 +74,19 @@ ul ul li {
    list-style: none;
 }
 
+input,
+optgroup,
+select,
+textarea {
+	outline: none;
+	border:none;
+	background-image:none;
+	background-color:transparent;
+	-webkit-box-shadow: none;
+	-moz-box-shadow: none;
+	box-shadow: none;  
+}
+
 /* width */
 ::-webkit-scrollbar {
 	width: 7px;
