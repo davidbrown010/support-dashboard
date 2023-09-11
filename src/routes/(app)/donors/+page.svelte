@@ -1,5 +1,6 @@
 <script lang="ts">
 	import HrefButton from '$lib/components/common/HrefButton.svelte';
+	import HrefInline from '$lib/components/common/HrefInline.svelte';
 
     import type { PageData } from './$types';
 
@@ -13,6 +14,9 @@ donors
    Loading... 
 {:then donors} 
     {#each donors as donor}
-        {donor.firstName + " " + donor.lastName}<br>
+        {#if donor.displayName}
+            <HrefInline url="/donors/{donor.id}" icon="page">{donor.displayName}</HrefInline> <br>
+        {/if}
+        
     {/each}
 {/await}

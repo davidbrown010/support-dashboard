@@ -1,5 +1,6 @@
 import { redirect, type Handle } from '@sveltejs/kit';
 import { auth } from "$lib/server/auth/lucia";
+import { param } from 'drizzle-orm';
 
 export const handle = (async ({ event, resolve }) => {
 
@@ -9,7 +10,7 @@ export const handle = (async ({ event, resolve }) => {
     
     if (nonAuthPages.indexOf(event.url.pathname) == -1) {
         const session = await event.locals.auth.validate();
-	    if (!session) throw redirect(302, "/login");
+	    if (!session) throw redirect(302, `/login?redirect=${encodeURI(event.url.pathname)}`);
 
         event.locals.user = {
             userId: session.user.userId,

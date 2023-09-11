@@ -64,6 +64,9 @@ export const actions: Actions = {
             })
 		}
 
-        throw redirect(302, "/");
+        const paramRedirect = event.url.searchParams.get("redirect")
+        if (paramRedirect) throw redirect(302, decodeURI(paramRedirect))
+        
+        else throw redirect(302, "/");
 	}
 };

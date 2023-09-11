@@ -6,7 +6,7 @@
 
 <div class="app">
 	<main>
-		<form method="post" action="logout?/logout" use:enhance>
+		<form method="post" action="/logout?/logout" use:enhance>
 			<input type="submit" value="Sign Out" />
 		</form>
 		<slot/>
