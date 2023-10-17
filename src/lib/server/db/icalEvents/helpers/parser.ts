@@ -6,10 +6,24 @@ export const parser = async (icsText: string): Promise<calendarObject> => {
 	let calendarObj: calendarObject = {
 		name: "",
 		color: "",
-		events: []
+		events: [],
+		event_ids: []
+	}
+
+	const nullEvent: icalEvent = {
+		created: new Date(),
+		start: new Date(),
+		end: new Date(),
+		length: -1,
+		name: '',
+		uid: '',
+		from: '',
+		sequence: -1
 	}
 
 	const currentEvent = () => { return calendarObj.events[calendarObj.events.length-1] }
+
+	let EXDATE_cache: Date[] = []
 
 	for (const line of lines) {
 		// console.log(`in: ${line}`)
@@ -38,8 +52,25 @@ export const parser = async (icsText: string): Promise<calendarObject> => {
 					else if (key?.includes("DTEND")) currentEvent().end = parseDate(value)
 					else if (key?.includes("DTSTART")) currentEvent().start = parseDate(value)
 					else if (key == "SUMMARY") currentEvent().name = value
-					else if (key == "UID") currentEvent().uid = value
-					else if (key == "END") { currentEvent().length = (((currentEvent().end.valueOf() - currentEvent().start.valueOf()) / 1000) / 60) / 60; currentEvent().from = calendarObj.name;}
+					else if (key == "UID") { 
+						currentEvent().uid = value
+						if (calendarObj.event_ids.indexOf(value) == -1) calendarObj.event_ids.push(value)
+					}
+					else if (key == "SEQUENCE") currentEvent().sequence = parseInt(value)
+					else if (key?.includes("EXDATE")) EXDATE_cache.push(parseDate(value))
+					else if (key == "END") {
+						currentEvent().length = (((currentEvent().end.valueOf() - currentEvent().start.valueOf()) / 1000) / 60) / 60;
+						currentEvent().from = calendarObj.name;
+
+						EXDATE_cache.forEach((exDate) => {
+							const copyOfCurrentEvent = {...currentEvent()}
+							copyOfCurrentEvent.start = exDate
+
+							calendarObj.events.push(copyOfCurrentEvent)
+						})
+
+						EXDATE_cache = [] as Date[]
+					}
 					break;
 
 				default:
@@ -48,6 +79,27 @@ export const parser = async (icsText: string): Promise<calendarObject> => {
 		}
 
 	}
+
+	//Removes all the events with a lower sequence number but the same date/uid
+	for (const [index, event_id] of calendarObj.event_ids.entries()) {
+		const relatedEvents = calendarObj.events.filter(x=>x.uid == event_id)
+		const removeEvents: icalEvent[] = []
+
+		for (let i = 0; i < relatedEvents.length; i++) {
+			for (let k = i+1; k < relatedEvents.length; k++) {
+				const eventToRemove = compareForOutdatedEvent(relatedEvents[i], relatedEvents[k])
+				if (eventToRemove != null) {
+					removeEvents.push(eventToRemove)
+				}
+			}
+		}
+
+		for (const removeEvent of removeEvents) {
+			calendarObj.events[calendarObj.events.indexOf(removeEvent)] = nullEvent
+		}
+	}
+
+	calendarObj.events = await calendarObj.events.filter((x)=>x.name != "")
 
 	return calendarObj
 }
@@ -68,6 +120,7 @@ function keyVal (lineOfText: string) {
 }
 
 function parseDate (dateAsString: string) {
+
 	try {
 		const [date, time] = dateAsString.split("T")
 
@@ -75,11 +128,14 @@ function parseDate (dateAsString: string) {
 		const month = parseInt(date.substring(4,6))
 		const day = parseInt(date.substring(6,8))
 
-		const hours = parseInt(time.substring(0,2))
+		const hours = parseInt(time.substring(0,2))		
 		const minutes = parseInt(time.substring(2,4))
 		const seconds = parseInt(time.substring(4,6))
 
-		return new Date(year, month, day, hours, minutes, seconds)
+		let parsedDate = new Date(year, month, day, hours, minutes, seconds)
+		parsedDate.setMonth(parsedDate.getMonth() - 1)
+		
+		return parsedDate
 	}
 	catch {
 		return new Date(0,0,1,0,0,0)
@@ -88,10 +144,25 @@ function parseDate (dateAsString: string) {
 	}
 }
 
+function compareForOutdatedEvent (event1: icalEvent, event2: icalEvent) {
+	if (event1.uid == event2.uid) {
+		if (event1.start.getDate() == event2.start.getDate()) {
+			if (event1.start.getMonth() == event2.start.getMonth()) {
+				if (event1.start.getFullYear() == event2.start.getFullYear()) {
+					if (event1.sequence >= event2.sequence) return null
+					else if (event1.sequence < event2.sequence) return event1
+				}
+			}
+		}
+	}
+	return null
+}
+
 type calendarObject = {
 	name: string,
 	color: string,
-	events: icalEvent[]
+	events: icalEvent[],
+	event_ids: string[]
 }
 
 export type icalEvent = {
@@ -101,5 +172,6 @@ export type icalEvent = {
 	length: number
 	name: string,
 	uid: string,
-	from: string
+	from: string,
+	sequence: number
 }

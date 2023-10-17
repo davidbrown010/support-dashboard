@@ -29,8 +29,8 @@ export const modifyEnhancedEvent = async (uid: string, categoryId: number) => {
 
 export const getAllICalEvents = async () => {
 
-    const beginDate = new Date(2023, 8, 21)
-    const endDate = new Date(2023, 11, 1)
+    const beginDate = new Date(2023, 7, 21)
+    const endDate = new Date(2023, 12, 1)
 
     const compareDates = (a: icalEvent, b: icalEvent) => {
         return a.start.valueOf() - b.start.valueOf();
@@ -85,7 +85,8 @@ export const getAllICalEvents = async () => {
 
     }
 
-
-    return getEventsFromICal()
+    const events = await getEventsFromICal()
+    
+    return events
 
 }
