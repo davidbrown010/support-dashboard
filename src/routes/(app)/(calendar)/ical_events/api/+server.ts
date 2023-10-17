@@ -24,15 +24,14 @@ export const GET: RequestHandler =  async ({url}) => {
             }
         }
 
-        return json(daysAr.map(x=>{
+        return json(addEmptyDates(daysAr.map(x=>{
             return {
                 date: new Date(x.date),
                 length: x.events.reduce((agg, cur) => {
                     return agg + cur.length
                 }, 0)
             }
-        }))
-
+        }).sort((a,b) => compareDates(a.date,b.date))).sort((a,b) => compareDates(a.date,b.date)))
     }
     
     return json(allEvents)
@@ -41,4 +40,45 @@ export const GET: RequestHandler =  async ({url}) => {
 type allDaysHolder = {
     date: string
     events: icalEvent[]
+}
+
+type finalDateOutput = {
+    date: Date,
+    length: number
+}
+
+function compareDates (a: Date, b: Date) {
+    return a.valueOf() - b.valueOf();
+}
+
+function addEmptyDates (dateAr: finalDateOutput[]) {
+
+    const dateArWithEmpty = [...dateAr]
+    
+    const firstDate = dateAr[0].date
+    const lastDate = dateAr[dateAr.length-1].date
+
+
+    let dateIterator = new Date(firstDate.toISOString())
+
+    const increment = () => {
+        dateIterator.setDate(dateIterator.getDate() + 1)
+    }
+
+
+    while (dateIterator.valueOf() < lastDate.valueOf()) {
+        increment()
+
+        const indexOfDateIterator = dateAr.map(x=>x.date.toLocaleDateString()).indexOf(dateIterator.toLocaleDateString())
+
+        if (indexOfDateIterator == -1) {
+            // console.log('NOT FOUND: ' + dateIterator.toLocaleDateString())
+            dateArWithEmpty.push({
+                date: new Date (dateIterator.toISOString()),
+                length: 0
+            })
+        }
+    }
+
+    return dateArWithEmpty
 }
