@@ -1,7 +1,8 @@
 import { icalEventCategoryTable, icalEventsTable } from "./schema";
 import { db } from "$lib/server/db/drizzle";
-import ical from "node-ical";
+import { parser } from "./helpers/parser";
 import { eq } from "drizzle-orm";
+import type { icalEvent } from "./helpers/parser";
 
 export const getAllEnhancedMetaData = async () => {
     const selectResult = await db.select().from(icalEventsTable);
@@ -26,16 +27,6 @@ export const modifyEnhancedEvent = async (uid: string, categoryId: number) => {
     console.log(result)
 }
 
-type icalEvent = {
-    name: string,
-    start: Date,
-    end: Date,
-    length: number,
-    from: string,
-    uid: string
-}
-
-
 export const getAllICalEvents = async () => {
 
     const beginDate = new Date(2023, 7, 21)
@@ -49,15 +40,15 @@ export const getAllICalEvents = async () => {
 
         const calendars = [
             {
-                name: "Chi Alpha",
+                displayName: "Chi Alpha",
                 url: "http://p151-caldav.icloud.com/published/2/MTA0Nzc2MTU4NzYxMDQ3N6fMTSiI4G46FbxeaKpJRm57iLmBPZ0OPCwFGrMOEnUivD_zqr8V_d2-FECGEHI-zTTDbtPmjbupu46f0ozQJCE"
             },
             {
-                name: "Team David",
+                displayName: "Team David",
                 url: "http://p151-caldav.icloud.com/published/2/MTA0Nzc2MTU4NzYxMDQ3N6fMTSiI4G46FbxeaKpJRm4-4jd8xw4Yw9QKb9TSlY2kzDCNYFe7hkOWQSBFEkFYfJuYntrNfbaalAQuFPcyhIY"
             },
             {
-                name: "Intern Work",
+                displayName: "Intern Work",
                 url: "http://p151-caldav.icloud.com/published/2/MTA0Nzc2MTU4NzYxMDQ3N6fMTSiI4G46FbxeaKpJRm69Q8xuVSY7y7cShX9W7yt0IqPV3dD0kBnK2j-biYSRwMl-V5pmUWwpJ9m_9qoPdhg"
             }
         ]
@@ -66,11 +57,17 @@ export const getAllICalEvents = async () => {
 
         const calendarWithEvents = await Promise.all(calendars.map(async (calendar) => {
 
-            const eventData = await ical.async.fromURL(calendar.url)
+            const icsResponse = await fetch(calendar.url)
+
+            const icsAsText = await icsResponse.text()
+
+
+            const parsedCalendar = await parser(icsAsText)
+
             
             return {
                 ...calendar,
-                events: Object.entries(eventData)
+                ...parsedCalendar
             }
         }))
         
@@ -80,23 +77,7 @@ export const getAllICalEvents = async () => {
             
             const events = cur.events
 
-            return [...agg, ...events.reduce((eventAgg, eventCur) => {
-                const ev = eventCur[1];
-                const uid = eventCur[0];
-
-                if (ev.type == 'VEVENT') {
-                    return [...eventAgg, {
-                        name: ev.summary,
-                        start: ev.start,
-                        end: ev.end,
-                        length: (((ev.end.valueOf() - ev.start.valueOf()) / 1000) / 60) / 60,
-                        from: calendarName,
-                        uid
-                    }]
-                }
-
-                return eventAgg
-            }, [] as icalEvent[])]
+            return [...agg, ...events]
 
         }, [] as icalEvent[])
 
