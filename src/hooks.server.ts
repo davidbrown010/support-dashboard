@@ -1,12 +1,11 @@
-import { redirect, type Handle } from '@sveltejs/kit';
+import { redirect, type Handle, json } from '@sveltejs/kit';
 import { auth } from "$lib/server/auth/lucia";
-import { param } from 'drizzle-orm';
 
 export const handle = (async ({ event, resolve }) => {
 
     event.locals.auth = auth.handleRequest(event);
     
-    const nonAuthPages = ['/login', '/register', '/resetPassword', '/login/api']
+    const nonAuthPages = ['/login', '/register', '/resetPassword', '/login/api', '/logout/api']
     
     if (nonAuthPages.indexOf(event.url.pathname) == -1) {
         const session = await event.locals.auth.validate();
@@ -16,6 +15,7 @@ export const handle = (async ({ event, resolve }) => {
             const authorizationHeader = event.request.headers.get("Authorization");
             const session = await event.locals.auth.validateBearerToken();
 
+            if (event.url.pathname.includes("api")) return json({status: 403, message: "Unauthorized."})
             throw redirect(302, `/login?redirect=${encodeURI(event.url.pathname)}`);
         }
 
