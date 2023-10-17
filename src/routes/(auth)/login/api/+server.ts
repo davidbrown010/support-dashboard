@@ -19,28 +19,12 @@ export const POST: RequestHandler = async ({request, locals}) => {
 
         locals.auth.setSession(session);
 
-        
+        return json({status: 200, sessionId: session.sessionId})
 
     } catch (e) {
 
         console.log(e)
 
-        // if ( e instanceof LuciaError &&
-        //     (e.message === "AUTH_INVALID_KEY_ID" ||
-        //         e.message === "AUTH_INVALID_PASSWORD")
-        // ) {
-        //     form.errors = { password: ['Incorrect username or password'] }
-        //     return fail(400, {
-        //         form
-        //     })
-        // }
-        
-        // form.errors = { password: ['an unknown error occurred'] }
-        // return fail(500, {
-        //     form
-        // })
         return json({status: 404, message: "login unsuccessful"})
     }
-    
-    return json({status: 200, message: "login successful"})
 };

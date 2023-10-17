@@ -10,7 +10,14 @@ export const handle = (async ({ event, resolve }) => {
     
     if (nonAuthPages.indexOf(event.url.pathname) == -1) {
         const session = await event.locals.auth.validate();
-	    if (!session) throw redirect(302, `/login?redirect=${encodeURI(event.url.pathname)}`);
+
+	    if (!session) {
+            //checks for API usage
+            const authorizationHeader = event.request.headers.get("Authorization");
+            const session = await event.locals.auth.validateBearerToken();
+
+            throw redirect(302, `/login?redirect=${encodeURI(event.url.pathname)}`);
+        }
 
         event.locals.user = {
             userId: session.user.userId,
