@@ -6,7 +6,7 @@ export const handle = (async ({ event, resolve }) => {
 
     event.locals.auth = auth.handleRequest(event);
     
-    const nonAuthPages = ['/login', '/register', '/resetPassword']
+    const nonAuthPages = ['/login', '/register', '/resetPassword', '/login/api']
     
     if (nonAuthPages.indexOf(event.url.pathname) == -1) {
         const session = await event.locals.auth.validate();
