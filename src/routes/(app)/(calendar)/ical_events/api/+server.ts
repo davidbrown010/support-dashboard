@@ -3,10 +3,10 @@ import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
 import type { icalEvent } from '$lib/server/db/icalEvents/helpers/parser';
 
-export const GET: RequestHandler =  async ({url}) => {
+export const GET: RequestHandler =  async ({url, locals}) => {
     const breakdownDimension = url.searchParams.get("breakdownDimension")
 
-    const allEvents = await getAllICalEvents()
+    const allEvents = await getAllICalEvents(locals.user.userId)
 
     if (breakdownDimension == "event") return json(allEvents)
     else if (breakdownDimension == "date") {

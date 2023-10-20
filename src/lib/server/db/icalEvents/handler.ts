@@ -1,4 +1,4 @@
-import { icalEventCategoryTable, icalEventsTable } from "./schema";
+import { icalEventCategoryTable, icalEventsTable, icalCalendarTable } from "./schema";
 import { db } from "$lib/server/db/drizzle";
 import { parser } from "./helpers/parser";
 import { eq } from "drizzle-orm";
@@ -14,6 +14,11 @@ export const getAllCategories = async () => {
     const selectResult = await db.select().from(icalEventCategoryTable);
     return selectResult;
 };
+
+export const getAlliCalCalendars = async (userId: string) => {
+    const selectResult = await db.select().from(icalCalendarTable).where(eq(icalCalendarTable.userFK, userId))
+    return selectResult
+}
 
 export const getAllEnhancedEvents = async () => {
 
@@ -31,7 +36,7 @@ const compareDates = (a: icalEvent, b: icalEvent) => {
     return a.start.valueOf() - b.start.valueOf();
 }
 
-export const getAllICalEvents = async () => {
+export const getAllICalEvents = async (userId: string) => {
 
     const beginDate = new Date(2023, 7, 1)
     const endDate = new Date(2023, 12, 1)
@@ -40,26 +45,11 @@ export const getAllICalEvents = async () => {
 
     const getEventsFromICal = async () => {
 
-        const calendars = [
-            {
-                displayName: "Chi Alpha",
-                url: "http://p151-caldav.icloud.com/published/2/MTA0Nzc2MTU4NzYxMDQ3N6fMTSiI4G46FbxeaKpJRm57iLmBPZ0OPCwFGrMOEnUivD_zqr8V_d2-FECGEHI-zTTDbtPmjbupu46f0ozQJCE"
-            },
-            {
-                displayName: "Team David",
-                url: "http://p151-caldav.icloud.com/published/2/MTA0Nzc2MTU4NzYxMDQ3N6fMTSiI4G46FbxeaKpJRm4-4jd8xw4Yw9QKb9TSlY2kzDCNYFe7hkOWQSBFEkFYfJuYntrNfbaalAQuFPcyhIY"
-            },
-            {
-                displayName: "Intern Work",
-                url: "http://p151-caldav.icloud.com/published/2/MTA0Nzc2MTU4NzYxMDQ3N6fMTSiI4G46FbxeaKpJRm69Q8xuVSY7y7cShX9W7yt0IqPV3dD0kBnK2j-biYSRwMl-V5pmUWwpJ9m_9qoPdhg"
-            }
-        ]
-
-        
+        const calendars = await getAlliCalCalendars(userId)
 
         const calendarWithEvents = await Promise.all(calendars.map(async (calendar) => {
 
-            const icsResponse = await fetch(calendar.url)
+            const icsResponse = await fetch(cleanICalURL(calendar.url))
 
             const icsAsText = await icsResponse.text()
 
@@ -91,4 +81,12 @@ export const getAllICalEvents = async () => {
     
     return events
 
+}
+
+function cleanICalURL (url: string) {
+	const prefixReplace = [{before: 'webcal://', after: 'http://'}]
+
+	return prefixReplace.reduce((agg, cur) => {
+		return agg.replaceAll(cur.before, cur.after)
+	}, url)
 }

@@ -21,3 +21,12 @@ export const icalEventCategoryTable = mysqlTable('ical_event_categories', {
 export const icalEventCategoryRelations = relations(icalEventCategoryTable, ({ many }) => ({
 	events: many(icalEventsTable),
 }));
+
+
+export const icalCalendarTable = mysqlTable('ical_calendars', {
+	id: serial('id').primaryKey(),
+  	name: varchar('name', {length: 255}).notNull(),
+	url: varchar('url', {length: 512}).notNull(),
+	color: varchar('color', {length: 7}).default('#0000FF'),
+	userFK: varchar('user_fk', { length: 15 }).notNull(),
+})
