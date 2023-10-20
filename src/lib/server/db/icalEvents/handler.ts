@@ -36,12 +36,7 @@ const compareDates = (a: icalEvent, b: icalEvent) => {
     return a.start.valueOf() - b.start.valueOf();
 }
 
-export const getAllICalEvents = async (userId: string) => {
-
-    const beginDate = new Date(2023, 7, 1)
-    const endDate = new Date(2023, 12, 1)
-
-    
+export const getAllICalEvents = async (userId: string, beginDate: Date, endDate: Date) => {
 
     const getEventsFromICal = async () => {
 
