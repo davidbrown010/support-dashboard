@@ -34,10 +34,10 @@ export const GET: RequestHandler =  async ({url, locals}) => {
         return json(addEmptyDates(daysAr.map(x=>{
             return {
                 date: new Date(x.date),
-                length: x.events.reduce((agg, cur) => {
+                length: [...x.events].reduce((agg, cur) => {
                     return agg + cur.length
                 }, 0),
-                lengthRequired: x.events.reduce((agg, cur) => {
+                lengthRequired: [...x.events].reduce((agg, cur) => {
                     return agg + (cur.isRequired ? cur.length : 0)
                 }, 0)
             }
