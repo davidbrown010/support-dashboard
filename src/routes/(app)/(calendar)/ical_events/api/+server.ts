@@ -34,10 +34,10 @@ export const GET: RequestHandler =  async ({url, locals}) => {
         return json(addEmptyDates(daysAr.map(x=>{
             return {
                 date: new Date(x.date),
-                length: [...x.events].reduce((agg, cur) => {
+                length: x.events.reduce((agg, cur) => {
                     return agg + cur.length
                 }, 0),
-                lengthRequired: [...x.events].reduce((agg, cur) => {
+                lengthRequired: x.events.reduce((agg, cur) => {
                     return agg + (cur.isRequired ? cur.length : 0)
                 }, 0)
             }
@@ -54,7 +54,8 @@ type allDaysHolder = {
 
 type finalDateOutput = {
     date: Date,
-    length: number
+    length: number,
+    lengthRequired: number
 }
 
 function compareDates (a: Date, b: Date) {
@@ -85,7 +86,8 @@ function addEmptyDates (dateAr: finalDateOutput[]) {
             // console.log('NOT FOUND: ' + dateIterator.toLocaleDateString())
             dateArWithEmpty.push({
                 date: new Date (dateIterator.toISOString()),
-                length: 0
+                length: 0,
+                lengthRequired: 0
             })
         }
     }
