@@ -18,7 +18,8 @@ export const parser = async (icsText: string): Promise<calendarObject> => {
 		name: '',
 		uid: '',
 		from: '',
-		sequence: -1
+		sequence: -1,
+		isRequired: false
 	}
 
 	const currentEvent = () => { return calendarObj.events[calendarObj.events.length-1] }
@@ -61,6 +62,7 @@ export const parser = async (icsText: string): Promise<calendarObject> => {
 					else if (key == "END") {
 						currentEvent().length = (((currentEvent().end.valueOf() - currentEvent().start.valueOf()) / 1000) / 60) / 60;
 						currentEvent().from = calendarObj.name;
+						currentEvent().isRequired = currentEvent().from.includes('(R)')
 
 						EXDATE_cache.forEach((exDate) => {
 							const copyOfCurrentEvent = {...currentEvent()}
@@ -173,5 +175,6 @@ export type icalEvent = {
 	name: string,
 	uid: string,
 	from: string,
-	sequence: number
+	sequence: number,
+	isRequired: boolean
 }
