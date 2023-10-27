@@ -1,8 +1,12 @@
-export const parser = async (icsText: string): Promise<calendarObject> => {
+import * as rrule_pkg from 'rrule';
+const { rrulestr, datetime } = rrule_pkg;
 
+
+export const parser = async (icsText: string, endDate: Date): Promise<calendarObject> => {
+
+	//GLOBAL PROPERTIES
 	const lines = icsText.replaceAll("\t", "").split(/\r\n|\n|\r/)
 
-	let currentType = ""
 	let calendarObj: calendarObject = {
 		name: "",
 		color: "",
@@ -10,114 +14,146 @@ export const parser = async (icsText: string): Promise<calendarObject> => {
 		event_ids: []
 	}
 
-	const nullEvent: icalEvent = {
-		created: new Date(),
-		start: new Date(),
-		end: new Date(),
-		length: -1,
-		name: '',
-		uid: '',
-		from: '',
-		sequence: -1,
-		isRequired: false,
-		isRelational: false
+	let iteratorProperties: iterator = {
+		currentType: "",
+		rrule_string: '',
+		EXDATE_cache: [],
+		eventInProcessing: new icalEvent()
 	}
 
-	const currentEvent = () => { return calendarObj.events[calendarObj.events.length-1] }
 
-	let RRULE = {} as RR_Rule
-	let EXDATE_cache: Date[] = []
 
+
+	//GOES THROUGH EACH LINE IN THE .ICS STRING
 	for (const line of lines) {
-		// console.log(`in: ${line}`)
 
+		//SETS THE CURRENT TYPE
 		if (line.substring(0,6) == "BEGIN:") {
 			const textAfterBegin = line.substring(6)
-
-			if (textAfterBegin.length > 0) currentType = textAfterBegin
-			if (currentType == "VEVENT") {
-				calendarObj.events.push({} as icalEvent)
-				RRULE = {} as RR_Rule
-			}
-		} else {
-			
-			const {key, value} = keyVal(line)
-			switch (currentType) {
-				case "VCALENDAR":
-					switch (key) {
-						case "X-WR-CALNAME":
-							calendarObj.name = value;
-							break;
-						case "X-APPLE-CALENDAR-COLOR":
-							calendarObj.color = value;
-							break;
-					}
-					break;
-				case "VEVENT":
-					if (key == "CREATED") currentEvent().created = parseDate(value)
-					else if (key?.includes("DTEND")) currentEvent().end = parseDate(value)
-					else if (key?.includes("DTSTART")) currentEvent().start = parseDate(value)
-					else if (key == "SUMMARY") currentEvent().name = value
-					else if (key?.includes("RRULE")) RRULE = parseRRule(value)
-					else if (key == "UID") { 
-						currentEvent().uid = value
-						if (calendarObj.event_ids.indexOf(value) == -1) calendarObj.event_ids.push(value)
-					}
-					else if (key == "SEQUENCE") currentEvent().sequence = parseInt(value)
-					else if (key?.includes("EXDATE")) EXDATE_cache.push(parseDate(value))
-					else if (key == "END") {
-						currentEvent().length = (((currentEvent().end.valueOf() - currentEvent().start.valueOf()) / 1000) / 60) / 60;
-						currentEvent().from = calendarObj.name;
-						currentEvent().isRequired = currentEvent().from.includes('(R)')
-						currentEvent().isRelational = currentEvent().from.includes('Relational')
-
-						const newDates = RRULEtoDates(RRULE, EXDATE_cache)
-						
-						// newDates.forEach((date) => {							
-
-						// 	const copyOfCurrentEvent = {...currentEvent()}
-						// 	copyOfCurrentEvent.start = date
-
-						// 	calendarObj.events.push(copyOfCurrentEvent)
-							
-							
-						// })
-						// RRULE:FREQ=WEEKLY;UNTIL=20230818T213000Z;BYDAY=TH,FR
-
-						EXDATE_cache = []
-					}
-					break;
-
-				default:
-					break;
+			if (textAfterBegin.length > 0) {
+				resetIteratorProperties(iteratorProperties)
+				iteratorProperties.currentType = textAfterBegin
 			}
 		}
+		//EXITS IF THERE ISN'T A CURRENT TYPE
+		if (iteratorProperties.currentType == "") continue;
+		
+		//GETS THE KEY/VALUE PAIR FOR THE LINE
+		const {key, value} = keyVal(line)
+
+
+		switch (iteratorProperties.currentType) {
+			//------------------------------------------ VCALENDAR -----------------------------------------------
+			case "VCALENDAR":
+				switch (key) {
+					case "X-WR-CALNAME":
+						calendarObj.name = value;
+						break;
+					case "X-APPLE-CALENDAR-COLOR":
+						calendarObj.color = value;
+						break;
+				}
+				break;
+
+
+			//------------------------------------------ VEVENT -----------------------------------------------
+			case "VEVENT":
+				if (key == "CREATED") iteratorProperties.eventInProcessing.created = parseDate(value)
+
+				else if (key?.includes("DTEND")) iteratorProperties.eventInProcessing.end = parseDate(value)
+
+				else if (key?.includes("DTSTART")) iteratorProperties.eventInProcessing.start = parseDate(value)
+
+				else if (key == "SUMMARY") iteratorProperties.eventInProcessing.name = value
+
+				else if (key?.includes("RRULE")) iteratorProperties.rrule_string = value
+
+				else if (key == "UID") { 
+					iteratorProperties.eventInProcessing.uid = value
+					if (calendarObj.event_ids.indexOf(value) == -1) calendarObj.event_ids.push(value)
+				}
+
+				else if (key == "SEQUENCE") iteratorProperties.eventInProcessing.sequence = parseInt(value)
+
+				else if (key?.includes("EXDATE")) iteratorProperties.EXDATE_cache.push(parseDate(value))
+				
+				else if (key == "END") {
+					
+					iteratorProperties.eventInProcessing.from = calendarObj.name;
+					iteratorProperties.eventInProcessing.isRequired = iteratorProperties.eventInProcessing.from.includes('(R)')
+					iteratorProperties.eventInProcessing.isRelational = iteratorProperties.eventInProcessing.from.includes('Relational')
+
+					console.log('-----------------------------------------------------')
+					console.log(`Event: ${iteratorProperties.eventInProcessing}\nRRULE:${iteratorProperties.rrule_string}`)
+					console.log('EXDATE_cache:', iteratorProperties.EXDATE_cache)
+
+					//INSERT ALL OF THE RECURRING EVENTS IN ARRAY --------------------------------------------------
+					if (iteratorProperties.rrule_string != "") {
+						const recurrenceRule = rrulestr(iteratorProperties.rrule_string, { dtstart: iteratorProperties.eventInProcessing.start, tzid: 'Etc/UTC',  forceset: true }) as rrule_pkg.RRuleSet
+						
+						for (let exdate of iteratorProperties.EXDATE_cache) {
+							recurrenceRule.exdate(exdate)
+						}
+
+						const recurrenceDates = recurrenceRule.all(function (date: Date, i: number) { return date.valueOf() < endDate.valueOf() })
+						
+						console.log("Dates Added: ")
+						
+						for (let date of recurrenceDates) {					
+							const copyOfCurrentEvent = new icalEvent(iteratorProperties.eventInProcessing)
+							copyOfCurrentEvent.start = date
+							copyOfCurrentEvent.end = date
+
+							console.log(copyOfCurrentEvent.start)
+
+							calendarObj.events.push(copyOfCurrentEvent)
+						}
+					} 
+					//JUST ADD THE ONE EVENT TO THE ARRAY --------------------------------------------------
+					else {
+						console.log("Dates Added: ", iteratorProperties.eventInProcessing.start)
+						calendarObj.events.push(iteratorProperties.eventInProcessing)
+					}
+					//THE EVENT HAS FINISHED PARSING
+				}
+				break;
+			
+			//ADD MORE TYPES HERE, OTHERWISE IGNORE
+			default:
+				break;
+
+		//END OF SWITCH
+		}
+		
 
 	}
 
 	//Removes all the events with a lower sequence number but the same date/uid
-	for (const [index, event_id] of calendarObj.event_ids.entries()) {
-		const relatedEvents = calendarObj.events.filter(x=>x.uid == event_id)
-		const removeEvents: icalEvent[] = []
+	// for (const [index, event_id] of calendarObj.event_ids.entries()) {
+	// 	const relatedEvents = calendarObj.events.filter(x=>x.uid == event_id)
+	// 	const removeEvents: icalEvent[] = []
 
-		for (let i = 0; i < relatedEvents.length; i++) {
-			for (let k = i+1; k < relatedEvents.length; k++) {
-				const eventToRemove = compareForOutdatedEvent(relatedEvents[i], relatedEvents[k])
-				if (eventToRemove != null) {
-					removeEvents.push(eventToRemove)
-				}
-			}
-		}
+	// 	for (let i = 0; i < relatedEvents.length; i++) {
+	// 		for (let k = i+1; k < relatedEvents.length; k++) {
+	// 			const eventToRemove = compareForOutdatedEvent(relatedEvents[i], relatedEvents[k])
+	// 			if (eventToRemove != null) {
+	// 				removeEvents.push(eventToRemove)
+	// 			}
+	// 		}
+	// 	}
 
-		for (const removeEvent of removeEvents) {
-			calendarObj.events[calendarObj.events.indexOf(removeEvent)] = nullEvent
-		}
-	}
+	// 	for (const removeEvent of removeEvents) {
+	// 		calendarObj.events[calendarObj.events.indexOf(removeEvent)] = nullEvent
+	// 	}
+	// }
 
 	calendarObj.events = await calendarObj.events.filter((x)=>x.name != "")
 
 	return calendarObj
 }
+
+
+/* ----------------------------------------- HELPER FUNCTIONS ---------------------------------------------*/
 
 function keyVal (lineOfText: string) {
 	if (lineOfText.includes(":")) {
@@ -147,13 +183,13 @@ function parseDate (dateAsString: string) {
 		const minutes = parseInt(time.substring(2,4))
 		const seconds = parseInt(time.substring(4,6))
 
-		let parsedDate = new Date(year, month, day, hours, minutes, seconds)
+		let parsedDate = datetime(year, month, day, hours, minutes, seconds)
 		parsedDate.setMonth(parsedDate.getMonth() - 1)
 		
 		return parsedDate
 	}
 	catch {
-		return new Date(0,0,1,0,0,0)
+		return datetime(0,0,1,0,0,0)
 	} finally {
 		
 	}
@@ -172,34 +208,17 @@ function compareForOutdatedEvent (event1: icalEvent, event2: icalEvent) {
 	}
 	return null
 }
-//RRULE:FREQ=WEEKLY;UNTIL=20230818T213000Z;BYDAY=TH,FR
-function parseRRule (rrule_text: string) {
-	const rrule_parse = rrule_text.replaceAll("RRULE:", "").split(';').map(x=>{
-		const [key, val] = x.split("=")
-		return {[key]: val}
-	}).reduce((agg, cur) => {
-		return {
-			...agg,
-			...cur
-		}
-	}, {})
 
-	const rrule_typed_obj: RR_Rule = {
-		frequency: rrule_parse?.FREQ as RR_Frequency,
-		until: parseDate(rrule_parse?.UNTIL),
-		by_month: rrule_parse?.BYMONTH?.split(','),
-		by_day: rrule_parse?.BYDAY?.split(','),
-		count: rrule_parse?.COUNT ? parseInt(rrule_parse?.COUNT) : null,
-		interval: rrule_parse?.INTERVAL ? parseInt(rrule_parse?.INTERVAL) : null
-	}
-
-	return rrule_typed_obj
-
+function resetIteratorProperties (iteratorProperties: iterator) {
+	return {
+		currentType: iteratorProperties.currentType = "",
+		rrule_string: iteratorProperties.rrule_string = "",
+		EXDATE_cache: iteratorProperties.EXDATE_cache = [],
+		eventInProcessing: new icalEvent()
+	} as iterator
 }
 
-function RRULEtoDates (rrule: RR_Rule, EXDATE_cache: Date[]) {
-
-}
+/* ----------------------------------------- TYPES ---------------------------------------------*/
 
 type calendarObject = {
 	name: string,
@@ -208,28 +227,42 @@ type calendarObject = {
 	event_ids: string[]
 }
 
-export type icalEvent = {
-	created: Date,
-	start: Date,
-	end: Date,
-	length: number
-	name: string,
-	uid: string,
-	from: string,
-	sequence: number,
-	isRequired: boolean,
+type iterator = {
+	currentType: string,
+	rrule_string: string,
+	EXDATE_cache: Date[],
+	eventInProcessing: icalEvent
+}
+
+class icalEvent {
+	created: Date
+	start: Date
+	end: Date
+	name: string
+	uid: string
+	from: string
+	sequence: number
+	isRequired: boolean
 	isRelational: boolean
+
+	constructor(event: icalEvent | null = null) {
+		const now = new Date()
+		this.created = event?.created || now
+		this.start = event?.start || now
+		this.end = event?.end || now
+		this.name = event?.name || ""
+		this.uid = event?.uid || ""
+		this.from = event?.from || ""
+		this.sequence = event?.sequence || -1
+		this.isRequired = event?.isRequired || false
+		this.isRelational = event?.isRelational || false
+	}
+
+	get length() {
+		return (((this.end.valueOf() - this.start.valueOf()) / 1000) / 60) / 60;
+	}
+
+	toString() {
+		return `Name: ${this.name}\nStart:${this.start}`
+	}
 }
-
-//RRULE:FREQ=WEEKLY;UNTIL=20230818T213000Z;BYDAY=TH,FR
-
-type RR_Rule = {
-	frequency: RR_Frequency,
-	until: Date,
-	by_month: string[] | null,
-	by_day: string[] | null,
-	count: number | null,
-	interval: number | null
-}
-
-type RR_Frequency = "DAILY" | "WEEKLY" | "MONTHLY" | null

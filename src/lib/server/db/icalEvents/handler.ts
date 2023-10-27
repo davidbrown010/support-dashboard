@@ -49,7 +49,7 @@ export const getAllICalEvents = async (userId: string, beginDate: Date, endDate:
             const icsAsText = await icsResponse.text()
 
 
-            const parsedCalendar = await parser(icsAsText)
+            const parsedCalendar = await parser(icsAsText, endDate)
 
             
             return {
@@ -76,6 +76,25 @@ export const getAllICalEvents = async (userId: string, beginDate: Date, endDate:
     
     return events
 
+}
+
+export const getICalEventsFromCalendar = async (url: string, beginDate: Date, endDate: Date) => {
+
+    const getEventsFromICal = async (url: string) => {
+
+        const icsResponse = await fetch(cleanICalURL(url))
+
+        const icsAsText = await icsResponse.text()
+
+        const {events} = await parser(icsAsText, endDate)
+
+        return events.filter(x=>x.start > beginDate && x.end < endDate).sort((a,b) => compareDates(a,b))
+
+    }
+
+    const events = await getEventsFromICal(url)
+    
+    return events
 }
 
 function cleanICalURL (url: string) {
