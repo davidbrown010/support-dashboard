@@ -41,7 +41,7 @@ export const GET: RequestHandler =  async ({url, locals}) => {
                     return agg + (cur.isRequired ? cur.length : 0)
                 }, 0),
                 lengthRelational: x.events.reduce((agg, cur) => {
-                    return agg + (cur.from.includes("Relational") ? cur.length : 0)
+                    return agg + (cur.isRelational ? cur.length : 0)
                 }, 0),
             }
         }).sort((a,b) => compareDates(a.date,b.date))).sort((a,b) => compareDates(a.date,b.date)))
