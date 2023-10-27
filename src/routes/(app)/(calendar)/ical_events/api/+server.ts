@@ -39,7 +39,10 @@ export const GET: RequestHandler =  async ({url, locals}) => {
                 }, 0),
                 lengthRequired: x.events.reduce((agg, cur) => {
                     return agg + (cur.isRequired ? cur.length : 0)
-                }, 0)
+                }, 0),
+                lengthRelational: x.events.reduce((agg, cur) => {
+                    return agg + (cur.from.includes("Relational") ? cur.length : 0)
+                }, 0),
             }
         }).sort((a,b) => compareDates(a.date,b.date))).sort((a,b) => compareDates(a.date,b.date)))
     }
@@ -55,7 +58,8 @@ type allDaysHolder = {
 type finalDateOutput = {
     date: Date,
     length: number,
-    lengthRequired: number
+    lengthRequired: number,
+    lengthRelational: number
 }
 
 function compareDates (a: Date, b: Date) {
@@ -87,7 +91,8 @@ function addEmptyDates (dateAr: finalDateOutput[]) {
             dateArWithEmpty.push({
                 date: new Date (dateIterator.toISOString()),
                 length: 0,
-                lengthRequired: 0
+                lengthRequired: 0,
+                lengthRelational: 0
             })
         }
     }
