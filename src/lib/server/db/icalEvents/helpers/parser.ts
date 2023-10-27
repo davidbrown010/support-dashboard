@@ -187,8 +187,8 @@ function parseRRule (rrule_text: string) {
 	const rrule_typed_obj: RR_Rule = {
 		frequency: rrule_parse?.FREQ as RR_Frequency,
 		until: parseDate(rrule_parse?.UNTIL),
-		by_month: rrule_parse?.BYMONTH.split(','),
-		by_day: rrule_parse?.BYDAY.split(','),
+		by_month: rrule_parse?.BYMONTH?.split(','),
+		by_day: rrule_parse?.BYDAY?.split(','),
 		count: rrule_parse?.COUNT ? parseInt(rrule_parse?.COUNT) : null,
 		interval: rrule_parse?.INTERVAL ? parseInt(rrule_parse?.INTERVAL) : null
 	}
