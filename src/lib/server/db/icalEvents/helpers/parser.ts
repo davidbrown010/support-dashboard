@@ -83,9 +83,9 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 					iteratorProperties.eventInProcessing.isRequired = iteratorProperties.eventInProcessing.from.includes('(R)')
 					iteratorProperties.eventInProcessing.isRelational = iteratorProperties.eventInProcessing.from.includes('Relational')
 
-					console.log('-----------------------------------------------------')
-					console.log(`Event: ${iteratorProperties.eventInProcessing}\nRRULE:${iteratorProperties.rrule_string}`)
-					console.log('EXDATE_cache:', iteratorProperties.EXDATE_cache)
+					// console.log('-----------------------------------------------------')
+					// console.log(`Event: ${iteratorProperties.eventInProcessing}\nRRULE:${iteratorProperties.rrule_string}`)
+					// console.log('EXDATE_cache:', iteratorProperties.EXDATE_cache)
 
 					//INSERT ALL OF THE RECURRING EVENTS IN ARRAY --------------------------------------------------
 					if (iteratorProperties.rrule_string != "") {
@@ -97,22 +97,22 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 
 						const recurrenceDates = recurrenceRule.all(function (date: Date, i: number) { return date.valueOf() < endDate.valueOf() })
 						
-						console.log("Dates Added: ")
+						// console.log("Dates Added: ")
 						
 						for (let date of recurrenceDates) {					
 							const copyOfCurrentEvent = new icalEvent(iteratorProperties.eventInProcessing)
 							copyOfCurrentEvent.start = date
 							copyOfCurrentEvent.end = date
 
-							console.log(copyOfCurrentEvent.start)
+							// console.log(copyOfCurrentEvent.start)
 
-							calendarObj.events.push(copyOfCurrentEvent)
+							calendarObj.events.push({...copyOfCurrentEvent} as icalEvent)
 						}
 					} 
 					//JUST ADD THE ONE EVENT TO THE ARRAY --------------------------------------------------
 					else {
-						console.log("Dates Added: ", iteratorProperties.eventInProcessing.start)
-						calendarObj.events.push(iteratorProperties.eventInProcessing)
+						// console.log("Dates Added: ", iteratorProperties.eventInProcessing.start)
+						calendarObj.events.push({...iteratorProperties.eventInProcessing} as icalEvent)
 					}
 					//THE EVENT HAS FINISHED PARSING
 				}
@@ -234,7 +234,7 @@ type iterator = {
 	eventInProcessing: icalEvent
 }
 
-class icalEvent {
+export class icalEvent {
 	created: Date
 	start: Date
 	end: Date
