@@ -95,13 +95,12 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 
 						const recurrenceRule = rrulestr(iteratorProperties.rrule_string, { dtstart: iteratorProperties.eventInProcessing.start, tzid: 'Etc/UTC',  forceset: true }) as rrule_pkg.RRuleSet
 
-						// console.log(`Start Date: ${iteratorProperties.eventInProcessing.start}`)
 
 						//ADD EXDATES TO RRULE
 						for (let exdate of iteratorProperties.EXDATE_cache) {
 							recurrenceRule.exdate(exdate)
 						}
-						// console.log("Dates tested")
+						// console.log("Dates tested: ")
 						const recurrenceDates = recurrenceRule.all(function (date: Date, i: number) { 
 							// console.log(date)
 							return date.valueOf() < endDate.valueOf() 
@@ -118,16 +117,16 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 
 							const endDate = new Date(date.toISOString())
 
-							endDate.setHours(endDate.getHours() + eventLength)
+							endDate.setMilliseconds(endDate.getMilliseconds() + (eventLength * 60 * 60 * 1000))
 
 							copyOfCurrentEvent.end = endDate
-
+							
 							calendarObj.events.push(new icalEvent(copyOfCurrentEvent))
 						}
 					} 
 					//JUST ADD THE ONE EVENT TO THE ARRAY --------------------------------------------------
 					else {
-						// console.log("Dates Added: ", iteratorProperties.eventInProcessing.start)
+						// console.log("Dates Added (NR): ", iteratorProperties.eventInProcessing.start)
 						calendarObj.events.push(new icalEvent(iteratorProperties.eventInProcessing))
 					}
 					//THE EVENT HAS FINISHED PARSING
@@ -153,6 +152,7 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 			for (let k = i+1; k < relatedEvents.length; k++) {
 				const eventToRemove = compareForOutdatedEvent(relatedEvents[i], relatedEvents[k])
 				if (eventToRemove != null) {
+					// console.log(eventToRemove)
 					removeEvents.push(eventToRemove)
 				}
 			}
@@ -290,6 +290,6 @@ export class icalEvent {
 	  }
 
 	toString() {
-		return `Name: ${this.name}\nStart:${this.start}`
+		return `Name: ${this.name}\nStart:${this.start}\nEnd:${this.end}`
 	}
 }
