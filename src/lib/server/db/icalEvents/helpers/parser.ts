@@ -83,36 +83,52 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 					iteratorProperties.eventInProcessing.isRequired = iteratorProperties.eventInProcessing.from.includes('(R)')
 					iteratorProperties.eventInProcessing.isRelational = iteratorProperties.eventInProcessing.from.includes('Relational')
 
-					// console.log('-----------------------------------------------------')
-					// console.log(`Event: ${iteratorProperties.eventInProcessing}\nRRULE:${iteratorProperties.rrule_string}`)
-					// console.log('EXDATE_cache:', iteratorProperties.EXDATE_cache)
 
 					//INSERT ALL OF THE RECURRING EVENTS IN ARRAY --------------------------------------------------
 					if (iteratorProperties.rrule_string != "") {
+						// console.log('-----------------------------------------------------')
+						// console.log(`Event: ${iteratorProperties.eventInProcessing}\nRRULE:${iteratorProperties.rrule_string}`)
+						// console.log('EXDATE_cache:', iteratorProperties.EXDATE_cache)
+
+						iteratorProperties.rrule_string = `DTSTART:${getISOString(iteratorProperties.eventInProcessing.start)}\nRRULE:${iteratorProperties.rrule_string}`
+						// console.log("RRULE_STRING: " + iteratorProperties.rrule_string)
+
 						const recurrenceRule = rrulestr(iteratorProperties.rrule_string, { dtstart: iteratorProperties.eventInProcessing.start, tzid: 'Etc/UTC',  forceset: true }) as rrule_pkg.RRuleSet
-						
+
+						// console.log(`Start Date: ${iteratorProperties.eventInProcessing.start}`)
+
+						//ADD EXDATES TO RRULE
 						for (let exdate of iteratorProperties.EXDATE_cache) {
 							recurrenceRule.exdate(exdate)
 						}
-
-						const recurrenceDates = recurrenceRule.all(function (date: Date, i: number) { return date.valueOf() < endDate.valueOf() })
+						// console.log("Dates tested")
+						const recurrenceDates = recurrenceRule.all(function (date: Date, i: number) { 
+							// console.log(date)
+							return date.valueOf() < endDate.valueOf() 
+						})
 						
 						// console.log("Dates Added: ")
 						
 						for (let date of recurrenceDates) {					
 							const copyOfCurrentEvent = new icalEvent(iteratorProperties.eventInProcessing)
-							copyOfCurrentEvent.start = date
-							copyOfCurrentEvent.end = date
 
-							// console.log(copyOfCurrentEvent.start)
+							const eventLength = copyOfCurrentEvent.length
 
-							calendarObj.events.push({...copyOfCurrentEvent} as icalEvent)
+							copyOfCurrentEvent.start = new Date(date.toISOString())
+
+							const endDate = new Date(date.toISOString())
+
+							endDate.setHours(endDate.getHours() + eventLength)
+
+							copyOfCurrentEvent.end = endDate
+
+							calendarObj.events.push(new icalEvent(copyOfCurrentEvent))
 						}
 					} 
 					//JUST ADD THE ONE EVENT TO THE ARRAY --------------------------------------------------
 					else {
 						// console.log("Dates Added: ", iteratorProperties.eventInProcessing.start)
-						calendarObj.events.push({...iteratorProperties.eventInProcessing} as icalEvent)
+						calendarObj.events.push(new icalEvent(iteratorProperties.eventInProcessing))
 					}
 					//THE EVENT HAS FINISHED PARSING
 				}
@@ -128,26 +144,26 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 
 	}
 
-	//Removes all the events with a lower sequence number but the same date/uid
-	// for (const [index, event_id] of calendarObj.event_ids.entries()) {
-	// 	const relatedEvents = calendarObj.events.filter(x=>x.uid == event_id)
-	// 	const removeEvents: icalEvent[] = []
+	// Removes all the events with a lower sequence number but the same date/uid
+	for (const [index, event_id] of calendarObj.event_ids.entries()) {
+		const relatedEvents = calendarObj.events.filter(x=>x.uid == event_id)
+		const removeEvents: icalEvent[] = []
 
-	// 	for (let i = 0; i < relatedEvents.length; i++) {
-	// 		for (let k = i+1; k < relatedEvents.length; k++) {
-	// 			const eventToRemove = compareForOutdatedEvent(relatedEvents[i], relatedEvents[k])
-	// 			if (eventToRemove != null) {
-	// 				removeEvents.push(eventToRemove)
-	// 			}
-	// 		}
-	// 	}
+		for (let i = 0; i < relatedEvents.length; i++) {
+			for (let k = i+1; k < relatedEvents.length; k++) {
+				const eventToRemove = compareForOutdatedEvent(relatedEvents[i], relatedEvents[k])
+				if (eventToRemove != null) {
+					removeEvents.push(eventToRemove)
+				}
+			}
+		}
 
-	// 	for (const removeEvent of removeEvents) {
-	// 		calendarObj.events[calendarObj.events.indexOf(removeEvent)] = nullEvent
-	// 	}
-	// }
+		for (const removeEvent of removeEvents) {
+			calendarObj.events[calendarObj.events.indexOf(removeEvent)] = new icalEvent()
+		}
+	}
 
-	calendarObj.events = await calendarObj.events.filter((x)=>x.name != "")
+	calendarObj.events = calendarObj.events.filter((x)=>x.name != "").map(x=>x.toJSON())
 
 	return calendarObj
 }
@@ -184,7 +200,6 @@ function parseDate (dateAsString: string) {
 		const seconds = parseInt(time.substring(4,6))
 
 		let parsedDate = datetime(year, month, day, hours, minutes, seconds)
-		parsedDate.setMonth(parsedDate.getMonth() - 1)
 		
 		return parsedDate
 	}
@@ -193,6 +208,11 @@ function parseDate (dateAsString: string) {
 	} finally {
 		
 	}
+}
+
+function getISOString (date: Date) {
+	const dateWithMiliseconds = date.toISOString().replaceAll('-',"").replaceAll(':',"").replaceAll('.',"")
+	return dateWithMiliseconds.substring(0,dateWithMiliseconds.length-4) + "Z"
 }
 
 function compareForOutdatedEvent (event1: icalEvent, event2: icalEvent) {
@@ -258,9 +278,16 @@ export class icalEvent {
 		this.isRelational = event?.isRelational || false
 	}
 
-	get length() {
+	public get length() {
 		return (((this.end.valueOf() - this.start.valueOf()) / 1000) / 60) / 60;
 	}
+
+	toJSON() {
+		return {
+			...this,
+			length: this.length
+		}
+	  }
 
 	toString() {
 		return `Name: ${this.name}\nStart:${this.start}`
