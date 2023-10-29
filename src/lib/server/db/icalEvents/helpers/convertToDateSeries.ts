@@ -1,6 +1,6 @@
-import type { icalEvent } from "./parser"
+import type { formatted_icalEvent } from "./parser"
 
-export const convertToDateSeries = (allEvents: icalEvent[]) => {
+export const convertToDateSeries = (allEvents: formatted_icalEvent[]) => {
 
     const daysAr = allEvents.reduce((agg, curEvent) => {
         const indexOfEvent = agg.map(x=>removeTimeStamp(x.date).valueOf()).indexOf(removeTimeStamp(curEvent.start).valueOf())
@@ -80,7 +80,7 @@ function removeTimeStamp (date: Date) {
 
 type allDaysHolder = {
     date: Date
-    events: icalEvent[]
+    events: formatted_icalEvent[]
 }
 
 type finalDateOutput = {

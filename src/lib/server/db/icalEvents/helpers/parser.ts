@@ -3,14 +3,15 @@ const { rrulestr, datetime } = rrule_pkg;
 
 
 export const parser = async (icsText: string, endDate: Date): Promise<calendarObject> => {
-
+	
 	//GLOBAL PROPERTIES
 	const lines = icsText.replaceAll("\t", "").split(/\r\n|\n|\r/)
 
 	let calendarObj: calendarObject = {
 		name: "",
 		color: "",
-		events: [],
+		rawEvents: [],
+		formattedEvents: [],
 		event_ids: []
 	}
 
@@ -63,6 +64,8 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 				else if (key?.includes("DTEND")) iteratorProperties.eventInProcessing.end = parseDate(value)
 
 				else if (key?.includes("DTSTART")) iteratorProperties.eventInProcessing.start = parseDate(value)
+				
+				else if (key?.includes("RECURRENCE-ID")) iteratorProperties.eventInProcessing.recurrenceId = parseDate(value)
 
 				else if (key == "SUMMARY") iteratorProperties.eventInProcessing.name = value
 
@@ -120,14 +123,17 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 							endDate.setMilliseconds(endDate.getMilliseconds() + (eventLength * 60 * 60 * 1000))
 
 							copyOfCurrentEvent.end = endDate
+
+
+							// console.log(copyOfCurrentEvent.start)
 							
-							calendarObj.events.push(new icalEvent(copyOfCurrentEvent))
+							calendarObj.rawEvents.push(new icalEvent(copyOfCurrentEvent))
 						}
 					} 
 					//JUST ADD THE ONE EVENT TO THE ARRAY --------------------------------------------------
 					else {
 						// console.log("Dates Added (NR): ", iteratorProperties.eventInProcessing.start)
-						calendarObj.events.push(new icalEvent(iteratorProperties.eventInProcessing))
+						calendarObj.rawEvents.push(new icalEvent(iteratorProperties.eventInProcessing))
 					}
 					//THE EVENT HAS FINISHED PARSING
 				}
@@ -145,26 +151,32 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 
 	// Removes all the events with a lower sequence number but the same date/uid
 	for (const [index, event_id] of calendarObj.event_ids.entries()) {
-		const relatedEvents = calendarObj.events.filter(x=>x.uid == event_id)
+		const relatedEvents = calendarObj.rawEvents.filter(x=>x.uid == event_id)
 		const removeEvents: icalEvent[] = []
 
+		// if (relatedEvents.length > 0 && relatedEvents[0].name=="Staff Devo") console.log(relatedEvents)
+
 		for (let i = 0; i < relatedEvents.length; i++) {
-			for (let k = i+1; k < relatedEvents.length; k++) {
+			for (let k = 0; k < relatedEvents.length; k++) {
+				if (k == i) continue
+
 				const eventToRemove = compareForOutdatedEvent(relatedEvents[i], relatedEvents[k])
 				if (eventToRemove != null) {
 					// console.log(eventToRemove)
+					if (eventToRemove.name == "Staff Devo") console.log("================== REMOVE =================", eventToRemove, "================== ========= =================")
 					removeEvents.push(eventToRemove)
 				}
 			}
 		}
 
+		
 		for (const removeEvent of removeEvents) {
-			calendarObj.events[calendarObj.events.indexOf(removeEvent)] = new icalEvent()
+			calendarObj.rawEvents[calendarObj.rawEvents.indexOf(removeEvent)] = new icalEvent()
 		}
 	}
 
-	calendarObj.events = calendarObj.events.filter((x)=>x.name != "").map(x=>x.toJSON())
-
+	calendarObj.formattedEvents = calendarObj.rawEvents.filter((x)=>x.name != "").map(x=>x.toJSON())
+	
 	return calendarObj
 }
 
@@ -212,16 +224,42 @@ function parseDate (dateAsString: string) {
 
 function getISOString (date: Date) {
 	const dateWithMiliseconds = date.toISOString().replaceAll('-',"").replaceAll(':',"").replaceAll('.',"")
-	return dateWithMiliseconds.substring(0,dateWithMiliseconds.length-4) + "Z"
+	return dateWithMiliseconds.substring(0,15) + "Z"
 }
 
 function compareForOutdatedEvent (event1: icalEvent, event2: icalEvent) {
 	if (event1.uid == event2.uid) {
-		if (event1.start.getDate() == event2.start.getDate()) {
+		if (event1.name == "Staff Devo") {
+			console.log(`COMPARE -------------------------------------------------------------`)
+			console.log(`..........EVENT 1.............`)
+			console.log(event1)
+			console.log(`..........EVENT 2.............`)
+			console.log(event2)
+			console.log(`--------------------------------------------------------------------`)
+		}
+		// If event1 is a ghost event but event2 has the same recurrendId as event2
+		if (event1.recurrenceId?.valueOf() == null) {
+			if (event1.start.valueOf() == event2.recurrenceId?.valueOf()) {
+				console.log("event1.start.valueOf() == event2.recurrenceId?.valueOf()")
+				return event1
+			}
+		}
+		//If event2 recurrence contains start date of event1 and event2 has mismatched data
+		else if (event2.recurrenceId?.valueOf() != null) {
+			if (event2.recurrenceId?.valueOf() != event2.start.valueOf()) {
+				if (event2.recurrenceId?.valueOf() == event1.start.valueOf()) {
+					console.log("event2.recurrenceId?.valueOf() != event1.start.valueOf()")
+					return event1
+				}
+			}
+		}
+		else if (event1.start.getDate() == event2.start.getDate()) {
 			if (event1.start.getMonth() == event2.start.getMonth()) {
 				if (event1.start.getFullYear() == event2.start.getFullYear()) {
-					if (event1.sequence >= event2.sequence) return null
-					else if (event1.sequence < event2.sequence) return event1
+					if (event1.sequence < event2.sequence) {
+						console.log("event1.sequence < event2.sequence")
+						return event1
+					}
 				}
 			}
 		}
@@ -230,12 +268,10 @@ function compareForOutdatedEvent (event1: icalEvent, event2: icalEvent) {
 }
 
 function resetIteratorProperties (iteratorProperties: iterator) {
-	return {
-		currentType: iteratorProperties.currentType = "",
-		rrule_string: iteratorProperties.rrule_string = "",
-		EXDATE_cache: iteratorProperties.EXDATE_cache = [],
-		eventInProcessing: new icalEvent()
-	} as iterator
+	iteratorProperties.currentType = ""
+	iteratorProperties.rrule_string = ""
+	iteratorProperties.EXDATE_cache = []
+	iteratorProperties.eventInProcessing = new icalEvent()
 }
 
 /* ----------------------------------------- TYPES ---------------------------------------------*/
@@ -243,7 +279,8 @@ function resetIteratorProperties (iteratorProperties: iterator) {
 type calendarObject = {
 	name: string,
 	color: string,
-	events: icalEvent[],
+	rawEvents: icalEvent[],
+	formattedEvents: formatted_icalEvent[],
 	event_ids: string[]
 }
 
@@ -252,6 +289,18 @@ type iterator = {
 	rrule_string: string,
 	EXDATE_cache: Date[],
 	eventInProcessing: icalEvent
+}
+
+export type formatted_icalEvent = {
+	name: string,	
+	start: Date
+	end: Date
+	length: number
+	created: Date
+	uid: string
+	from: string
+	isRequired: boolean
+	isRelational: boolean
 }
 
 export class icalEvent {
@@ -264,6 +313,7 @@ export class icalEvent {
 	sequence: number
 	isRequired: boolean
 	isRelational: boolean
+	recurrenceId: Date | null
 
 	constructor(event: icalEvent | null = null) {
 		const now = new Date()
@@ -276,6 +326,7 @@ export class icalEvent {
 		this.sequence = event?.sequence || -1
 		this.isRequired = event?.isRequired || false
 		this.isRelational = event?.isRelational || false
+		this.recurrenceId = event?.recurrenceId || null
 	}
 
 	public get length() {
@@ -284,8 +335,15 @@ export class icalEvent {
 
 	toJSON() {
 		return {
-			...this,
-			length: this.length
+			name: this.name,			
+			start: this.start,
+			end: this.end,
+			length: this.length,
+			created: this.created,
+			uid: this.uid,
+			from: this.from,
+			isRequired: this.isRequired,
+			isRelational: this.isRelational
 		}
 	  }
 

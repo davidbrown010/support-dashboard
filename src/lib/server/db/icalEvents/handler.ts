@@ -2,7 +2,7 @@ import { icalEventCategoryTable, icalEventsTable, icalCalendarTable } from "./sc
 import { db } from "$lib/server/db/drizzle";
 import { parser } from "./helpers/parser";
 import { eq } from "drizzle-orm";
-import type { icalEvent } from "./helpers/parser";
+import type { icalEvent, formatted_icalEvent } from "./helpers/parser";
 
 export const getAllEnhancedMetaData = async () => {
     const selectResult = await db.select().from(icalEventsTable);
@@ -32,7 +32,7 @@ export const modifyEnhancedEvent = async (uid: string, categoryId: number) => {
     console.log(result)
 }
 
-const compareDates = (a: icalEvent, b: icalEvent) => {
+const compareDates = (a: formatted_icalEvent, b: formatted_icalEvent) => {
     return a.start.valueOf() - b.start.valueOf();
 }
 
@@ -58,15 +58,15 @@ export const getAllICalEvents = async (userId: string, beginDate: Date, endDate:
             }
         }))
         
-        const allEvents: icalEvent[] = calendarWithEvents.reduce((agg, cur) => {
+        const allEvents: formatted_icalEvent[] = calendarWithEvents.reduce((agg, cur) => {
 
             const calendarName = cur.name
             
-            const events = cur.events
+            const events = cur.formattedEvents
 
             return [...agg, ...events]
 
-        }, [] as icalEvent[])
+        }, [] as formatted_icalEvent[])
 
         return allEvents.filter(x=>x.start > beginDate && x.end < endDate).sort((a,b) => compareDates(a,b))
 
@@ -86,9 +86,9 @@ export const getICalEventsFromCalendar = async (url: string, beginDate: Date, en
 
         const icsAsText = await icsResponse.text()
 
-        const {events} = await parser(icsAsText, endDate)
+        const {formattedEvents} = await parser(icsAsText, endDate)
 
-        return events.filter(x=>x.start > beginDate && x.end < endDate).sort((a,b) => compareDates(a,b))
+        return formattedEvents.filter(x=>x.start > beginDate && x.end < endDate).sort((a,b) => compareDates(a,b))
 
     }
 
