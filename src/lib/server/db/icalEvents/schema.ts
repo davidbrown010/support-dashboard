@@ -30,3 +30,9 @@ export const icalCalendarTable = mysqlTable('ical_calendars', {
 	color: varchar('color', {length: 7}).default('#0000FF'),
 	userFK: varchar('user_fk', { length: 15 }).notNull(),
 })
+
+export const lookerReportTable = mysqlTable('looker_reports', {
+	id: serial('id').primaryKey(),
+  	reportId: varchar('report_id', {length: 512}).notNull(),
+	userFK: varchar('user_fk', { length: 15 }).notNull(),
+})

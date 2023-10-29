@@ -13,6 +13,7 @@ Welcome back {data.user.firstName}!
 <div class="btnWrapper">
     <HrefButton url="/donors" activeColor="cyan">Donors</HrefButton>
     <HrefButton url="/tasks" activeColor="green">Tasks</HrefButton>
+    <HrefButton url="/my_calendars" activeColor="red">Calendar</HrefButton>
 </div>
 
 <style lang="scss">

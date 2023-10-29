@@ -1,8 +1,8 @@
-import { icalEventCategoryTable, icalEventsTable, icalCalendarTable } from "./schema";
+import { icalEventCategoryTable, icalEventsTable, icalCalendarTable, lookerReportTable } from "./schema";
 import { db } from "$lib/server/db/drizzle";
 import { parser } from "./helpers/parser";
 import { eq } from "drizzle-orm";
-import type { icalEvent, formatted_icalEvent } from "./helpers/parser";
+import type { formatted_icalEvent } from "./helpers/parser";
 
 export const getAllEnhancedMetaData = async () => {
     const selectResult = await db.select().from(icalEventsTable);
@@ -103,4 +103,9 @@ function cleanICalURL (url: string) {
 	return prefixReplace.reduce((agg, cur) => {
 		return agg.replaceAll(cur.before, cur.after)
 	}, url)
+}
+
+export const getLookerReports = async (userId: string) => {
+    const selectResult = await db.select().from(lookerReportTable).where(eq(lookerReportTable.userFK, userId))
+    return selectResult
 }
