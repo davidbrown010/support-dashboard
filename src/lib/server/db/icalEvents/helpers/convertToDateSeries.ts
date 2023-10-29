@@ -16,7 +16,7 @@ export const convertToDateSeries = (allEvents: formatted_icalEvent[]) => {
     }, [] as allDaysHolder[])
 
 
-    const daysWithComputedData = daysAr.map(x=>{
+    const daysWithComputedData: finalDateOutput[] = daysAr.map(x=>{
         return {
             date: x.date,
             length: x.events.reduce((agg, cur) => {
@@ -39,7 +39,7 @@ export const convertToDateSeries = (allEvents: formatted_icalEvent[]) => {
             }, 0),
             length_flexible_notRelational: x.events.reduce((agg, cur) => {
                 return agg + (!cur.isRelational && !cur.isRequired ? cur.length : 0)
-            }, 0),
+            }, 0)
         }
     }).sort((a,b) => compareDates(a.date,b.date))
 
@@ -77,7 +77,11 @@ function addEmptyDates (dateAr: finalDateOutput[]) {
                 date: new Date (dateIterator.toISOString()),
                 length: 0,
                 lengthRequired: 0,
-                lengthRelational: 0
+                lengthRelational: 0,
+                length_required_relational: 0,
+                length_required_notRelational: 0,
+                length_flexible_relational: 0,
+                length_flexible_notRelational: 0
             })
         }
     }
@@ -99,5 +103,9 @@ type finalDateOutput = {
     date: Date,
     length: number,
     lengthRequired: number,
-    lengthRelational: number
+    lengthRelational: number,
+    length_required_relational: number,
+    length_required_notRelational: number,
+    length_flexible_relational: number,
+    length_flexible_notRelational: number
 }
