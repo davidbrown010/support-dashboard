@@ -28,6 +28,18 @@ export const convertToDateSeries = (allEvents: formatted_icalEvent[]) => {
             lengthRelational: x.events.reduce((agg, cur) => {
                 return agg + (cur.isRelational ? cur.length : 0)
             }, 0),
+            length_required_relational: x.events.reduce((agg, cur) => {
+                return agg + (cur.isRelational && cur.isRequired ? cur.length : 0)
+            }, 0),
+            length_required_notRelational: x.events.reduce((agg, cur) => {
+                return agg + (!cur.isRelational && cur.isRequired ? cur.length : 0)
+            }, 0),
+            length_flexible_relational: x.events.reduce((agg, cur) => {
+                return agg + (cur.isRelational && !cur.isRequired ? cur.length : 0)
+            }, 0),
+            length_flexible_notRelational: x.events.reduce((agg, cur) => {
+                return agg + (!cur.isRelational && !cur.isRequired ? cur.length : 0)
+            }, 0),
         }
     }).sort((a,b) => compareDates(a.date,b.date))
 

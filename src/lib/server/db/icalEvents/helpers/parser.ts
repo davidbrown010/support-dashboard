@@ -230,17 +230,17 @@ function getISOString (date: Date) {
 function compareForOutdatedEvent (event1: icalEvent, event2: icalEvent) {
 	if (event1.uid == event2.uid) {
 		if (event1.name == "Staff Devo") {
-			console.log(`COMPARE -------------------------------------------------------------`)
-			console.log(`..........EVENT 1.............`)
-			console.log(event1)
-			console.log(`..........EVENT 2.............`)
-			console.log(event2)
-			console.log(`--------------------------------------------------------------------`)
+			// console.log(`COMPARE -------------------------------------------------------------`)
+			// console.log(`..........EVENT 1.............`)
+			// console.log(event1)
+			// console.log(`..........EVENT 2.............`)
+			// console.log(event2)
+			// console.log(`--------------------------------------------------------------------`)
 		}
 		// If event1 is a ghost event but event2 has the same recurrendId as event2
 		if (event1.recurrenceId?.valueOf() == null) {
 			if (event1.start.valueOf() == event2.recurrenceId?.valueOf()) {
-				console.log("event1.start.valueOf() == event2.recurrenceId?.valueOf()")
+				// console.log("event1.start.valueOf() == event2.recurrenceId?.valueOf()")
 				return event1
 			}
 		}
@@ -248,7 +248,7 @@ function compareForOutdatedEvent (event1: icalEvent, event2: icalEvent) {
 		else if (event2.recurrenceId?.valueOf() != null) {
 			if (event2.recurrenceId?.valueOf() != event2.start.valueOf()) {
 				if (event2.recurrenceId?.valueOf() == event1.start.valueOf()) {
-					console.log("event2.recurrenceId?.valueOf() != event1.start.valueOf()")
+					// console.log("event2.recurrenceId?.valueOf() != event1.start.valueOf()")
 					return event1
 				}
 			}
@@ -257,7 +257,7 @@ function compareForOutdatedEvent (event1: icalEvent, event2: icalEvent) {
 			if (event1.start.getMonth() == event2.start.getMonth()) {
 				if (event1.start.getFullYear() == event2.start.getFullYear()) {
 					if (event1.sequence < event2.sequence) {
-						console.log("event1.sequence < event2.sequence")
+						// console.log("event1.sequence < event2.sequence")
 						return event1
 					}
 				}
