@@ -83,7 +83,7 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 				else if (key == "END") {
 					
 					iteratorProperties.eventInProcessing.from = calendarObj.name;
-					iteratorProperties.eventInProcessing.isRequired = iteratorProperties.eventInProcessing.from.includes('(R)')
+					iteratorProperties.eventInProcessing.isStructured = iteratorProperties.eventInProcessing.from.includes('(R)')
 					iteratorProperties.eventInProcessing.isRelational = iteratorProperties.eventInProcessing.from.includes('Relational')
 
 
@@ -299,7 +299,7 @@ export type formatted_icalEvent = {
 	created: Date
 	uid: string
 	from: string
-	isRequired: boolean
+	isStructured: boolean
 	isRelational: boolean
 }
 
@@ -311,7 +311,7 @@ export class icalEvent {
 	uid: string
 	from: string
 	sequence: number
-	isRequired: boolean
+	isStructured: boolean
 	isRelational: boolean
 	recurrenceId: Date | null
 
@@ -324,7 +324,7 @@ export class icalEvent {
 		this.uid = event?.uid || ""
 		this.from = event?.from || ""
 		this.sequence = event?.sequence || -1
-		this.isRequired = event?.isRequired || false
+		this.isStructured = event?.isStructured || false
 		this.isRelational = event?.isRelational || false
 		this.recurrenceId = event?.recurrenceId || null
 	}
@@ -342,7 +342,7 @@ export class icalEvent {
 			created: this.created,
 			uid: this.uid,
 			from: this.from,
-			isRequired: this.isRequired,
+			isStructured: this.isStructured,
 			isRelational: this.isRelational
 		}
 	  }
