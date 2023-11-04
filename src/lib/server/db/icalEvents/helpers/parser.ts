@@ -83,7 +83,7 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 				else if (key == "END") {
 					
 					iteratorProperties.eventInProcessing.from = calendarObj.name;
-					iteratorProperties.eventInProcessing.isStructured = iteratorProperties.eventInProcessing.from.includes('(R)')
+					iteratorProperties.eventInProcessing.isStructured = iteratorProperties.eventInProcessing.from.includes('(S)')
 					iteratorProperties.eventInProcessing.isRelational = iteratorProperties.eventInProcessing.from.includes('Relational')
 
 
