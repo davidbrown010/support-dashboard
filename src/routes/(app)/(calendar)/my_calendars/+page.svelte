@@ -7,6 +7,7 @@
 </script>
 
 <HrefButton url="/" activeColor="cyan">Home</HrefButton>
+<!-- <HrefButton url="/my_calendars/manage" activeColor="cyan">Manage Calendars</HrefButton> -->
 
 {#await data.streaming.reports}
     Loading...
