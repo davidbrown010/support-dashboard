@@ -84,6 +84,8 @@ export const getICalEventsFromCalendar = async (url: string, beginDate: Date, en
 
         const icsResponse = await fetch(cleanICalURL(url))
 
+        console.log(icsResponse)
+
         const icsAsText = await icsResponse.text()
 
         const {formattedEvents} = await parser(icsAsText, endDate)

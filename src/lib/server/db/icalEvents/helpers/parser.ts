@@ -86,6 +86,8 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 					iteratorProperties.eventInProcessing.isStructured = iteratorProperties.eventInProcessing.from.includes('(S)')
 					iteratorProperties.eventInProcessing.isRelational = iteratorProperties.eventInProcessing.from.includes('Relational')
 
+					if (iteratorProperties.eventInProcessing.start.valueOf() == iteratorProperties.eventInProcessing.end.valueOf()) continue
+
 
 					//INSERT ALL OF THE RECURRING EVENTS IN ARRAY --------------------------------------------------
 					if (iteratorProperties.rrule_string != "") {
@@ -95,9 +97,14 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 
 						iteratorProperties.rrule_string = `DTSTART:${getISOString(iteratorProperties.eventInProcessing.start)}\nRRULE:${iteratorProperties.rrule_string}`
 						// console.log("RRULE_STRING: " + iteratorProperties.rrule_string)
+						// console.log(iteratorProperties.eventInProcessing.name)
+
+						if (iteratorProperties.rrule_string.substring(iteratorProperties.rrule_string.length-3) == ";WK") iteratorProperties.rrule_string = iteratorProperties.rrule_string.substring(0,iteratorProperties.rrule_string.length-3)
 
 						const recurrenceRule = rrulestr(iteratorProperties.rrule_string, { dtstart: iteratorProperties.eventInProcessing.start, tzid: 'Etc/UTC',  forceset: true }) as rrule_pkg.RRuleSet
 
+						
+						// console.log(recurrenceRule)
 
 						//ADD EXDATES TO RRULE
 						for (let exdate of iteratorProperties.EXDATE_cache) {
