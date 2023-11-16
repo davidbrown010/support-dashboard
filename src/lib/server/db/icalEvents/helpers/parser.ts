@@ -91,11 +91,12 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 
 					//INSERT ALL OF THE RECURRING EVENTS IN ARRAY --------------------------------------------------
 					if (iteratorProperties.rrule_string != "") {
-						// console.log('-----------------------------------------------------')
-						// console.log(`Event: ${iteratorProperties.eventInProcessing}\nRRULE:${iteratorProperties.rrule_string}`)
+						console.log('-----------------------------------------------------')
+						console.log(`Event: ${iteratorProperties.eventInProcessing}\nRRULE:${iteratorProperties.rrule_string}`)
 						// console.log('EXDATE_cache:', iteratorProperties.EXDATE_cache)
 
-						iteratorProperties.rrule_string = `DTSTART:${getISOString(iteratorProperties.eventInProcessing.start)}\nRRULE:${iteratorProperties.rrule_string}`
+						if (!iteratorProperties.rrule_string.includes("DTSTART:")) iteratorProperties.rrule_string = `DTSTART:${getISOString(iteratorProperties.eventInProcessing.start)}\nRRULE:${iteratorProperties.rrule_string}`
+						
 						// console.log("RRULE_STRING: " + iteratorProperties.rrule_string)
 						// console.log(iteratorProperties.eventInProcessing.name)
 
@@ -170,7 +171,7 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 				const eventToRemove = compareForOutdatedEvent(relatedEvents[i], relatedEvents[k])
 				if (eventToRemove != null) {
 					// console.log(eventToRemove)
-					if (eventToRemove.name == "Staff Devo") console.log("================== REMOVE =================", eventToRemove, "================== ========= =================")
+					// if (eventToRemove.name == "Staff Devo") console.log("================== REMOVE =================", eventToRemove, "================== ========= =================")
 					removeEvents.push(eventToRemove)
 				}
 			}
@@ -236,14 +237,14 @@ function getISOString (date: Date) {
 
 function compareForOutdatedEvent (event1: icalEvent, event2: icalEvent) {
 	if (event1.uid == event2.uid) {
-		if (event1.name == "Staff Devo") {
-			// console.log(`COMPARE -------------------------------------------------------------`)
-			// console.log(`..........EVENT 1.............`)
-			// console.log(event1)
-			// console.log(`..........EVENT 2.............`)
-			// console.log(event2)
-			// console.log(`--------------------------------------------------------------------`)
-		}
+		// if (event1.name == "Staff Devo") {
+		// 	console.log(`COMPARE -------------------------------------------------------------`)
+		// 	console.log(`..........EVENT 1.............`)
+		// 	console.log(event1)
+		// 	console.log(`..........EVENT 2.............`)
+		// 	console.log(event2)
+		// 	console.log(`--------------------------------------------------------------------`)
+		// }
 		// If event1 is a ghost event but event2 has the same recurrendId as event2
 		if (event1.recurrenceId?.valueOf() == null) {
 			if (event1.start.valueOf() == event2.recurrenceId?.valueOf()) {
