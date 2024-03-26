@@ -19,8 +19,6 @@ export const GET: RequestHandler =  async ({url, locals}) => {
 
     const sumStats = sumHours(allEvents)
 
-    console.log(sumStats)
-
     return json({
         sumStats
     })
