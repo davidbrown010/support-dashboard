@@ -1,5 +1,5 @@
 import { getICalEventsFromCalendar } from '$lib/server/db/icalEvents/handler';
-import type { RequestHandler } from '../../ical_events/api/$types';
+import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
 import {convertToDateSeries} from '$lib/server/db/icalEvents/helpers/convertToDateSeries'
 

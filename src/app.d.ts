@@ -17,7 +17,8 @@ declare global {
 		type DatabaseUserAttributes = {
             username: string,
             firstName: string,
-            lastName: string
+            lastName: string,
+			userClass: number
 		};
 		type DatabaseSessionAttributes = {};
 	}
