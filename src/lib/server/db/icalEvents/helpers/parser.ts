@@ -1,6 +1,6 @@
 import * as rrule_pkg from 'rrule';
 const { rrulestr, datetime } = rrule_pkg;
-
+const PRINT_HELP = false
 
 export const parser = async (icsText: string, endDate: Date): Promise<calendarObject> => {
 	
@@ -91,33 +91,33 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 
 					//INSERT ALL OF THE RECURRING EVENTS IN ARRAY --------------------------------------------------
 					if (iteratorProperties.rrule_string != "") {
-						console.log('-----------------------------------------------------')
-						console.log(`Event: ${iteratorProperties.eventInProcessing}\nRRULE:${iteratorProperties.rrule_string}`)
-						// console.log('EXDATE_cache:', iteratorProperties.EXDATE_cache)
+						PRINT_HELP && console.log('-----------------------------------------------------')
+						PRINT_HELP && console.log(`Event: ${iteratorProperties.eventInProcessing}\nRRULE:${iteratorProperties.rrule_string}`)
+						// PRINT_HELP && console.log('EXDATE_cache:', iteratorProperties.EXDATE_cache)
 
 						if (!iteratorProperties.rrule_string.includes("DTSTART:")) iteratorProperties.rrule_string = `DTSTART:${getISOString(iteratorProperties.eventInProcessing.start)}\nRRULE:${iteratorProperties.rrule_string}`
 						
-						// console.log("RRULE_STRING: " + iteratorProperties.rrule_string)
-						// console.log(iteratorProperties.eventInProcessing.name)
+						// PRINT_HELP && console.log("RRULE_STRING: " + iteratorProperties.rrule_string)
+						// PRINT_HELP && console.log(iteratorProperties.eventInProcessing.name)
 
 						if (iteratorProperties.rrule_string.substring(iteratorProperties.rrule_string.length-3) == ";WK") iteratorProperties.rrule_string = iteratorProperties.rrule_string.substring(0,iteratorProperties.rrule_string.length-3)
 
 						const recurrenceRule = rrulestr(iteratorProperties.rrule_string, { dtstart: iteratorProperties.eventInProcessing.start, tzid: 'Etc/UTC',  forceset: true }) as rrule_pkg.RRuleSet
 
 						
-						// console.log(recurrenceRule)
+						// PRINT_HELP && console.log(recurrenceRule)
 
 						//ADD EXDATES TO RRULE
 						for (let exdate of iteratorProperties.EXDATE_cache) {
 							recurrenceRule.exdate(exdate)
 						}
-						// console.log("Dates tested: ")
+						// PRINT_HELP && console.log("Dates tested: ")
 						const recurrenceDates = recurrenceRule.all(function (date: Date, i: number) { 
-							// console.log(date)
-							return date.valueOf() < endDate.valueOf() 
+							// PRINT_HELP && console.log(date)
+							return date.valueOf() <= endDate.valueOf() 
 						})
 						
-						// console.log("Dates Added: ")
+						// PRINT_HELP && console.log("Dates Added: ")
 						
 						for (let date of recurrenceDates) {					
 							const copyOfCurrentEvent = new icalEvent(iteratorProperties.eventInProcessing)
@@ -133,14 +133,14 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 							copyOfCurrentEvent.end = endDate
 
 
-							// console.log(copyOfCurrentEvent.start)
+							// PRINT_HELP && console.log(copyOfCurrentEvent.start)
 							
 							calendarObj.rawEvents.push(new icalEvent(copyOfCurrentEvent))
 						}
 					} 
 					//JUST ADD THE ONE EVENT TO THE ARRAY --------------------------------------------------
 					else {
-						// console.log("Dates Added (NR): ", iteratorProperties.eventInProcessing.start)
+						// PRINT_HELP && console.log("Dates Added (NR): ", iteratorProperties.eventInProcessing.start)
 						calendarObj.rawEvents.push(new icalEvent(iteratorProperties.eventInProcessing))
 					}
 					//THE EVENT HAS FINISHED PARSING
@@ -162,7 +162,7 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 		const relatedEvents = calendarObj.rawEvents.filter(x=>x.uid == event_id)
 		const removeEvents: icalEvent[] = []
 
-		// if (relatedEvents.length > 0 && relatedEvents[0].name=="Staff Devo") console.log(relatedEvents)
+		// if (relatedEvents.length > 0 && relatedEvents[0].name=="Staff Devo") PRINT_HELP && console.log(relatedEvents)
 
 		for (let i = 0; i < relatedEvents.length; i++) {
 			for (let k = 0; k < relatedEvents.length; k++) {
@@ -170,8 +170,8 @@ export const parser = async (icsText: string, endDate: Date): Promise<calendarOb
 
 				const eventToRemove = compareForOutdatedEvent(relatedEvents[i], relatedEvents[k])
 				if (eventToRemove != null) {
-					// console.log(eventToRemove)
-					// if (eventToRemove.name == "Staff Devo") console.log("================== REMOVE =================", eventToRemove, "================== ========= =================")
+					// PRINT_HELP && console.log(eventToRemove)
+					// if (eventToRemove.name == "Staff Devo") PRINT_HELP && console.log("================== REMOVE =================", eventToRemove, "================== ========= =================")
 					removeEvents.push(eventToRemove)
 				}
 			}

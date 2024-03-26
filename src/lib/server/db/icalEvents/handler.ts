@@ -68,7 +68,7 @@ export const getAllICalEvents = async (userId: string, beginDate: Date, endDate:
 
         }, [] as formatted_icalEvent[])
 
-        return allEvents.filter(x=>x.start > beginDate && x.end < endDate).sort((a,b) => compareDates(a,b))
+        return allEvents.filter(x=>x.start > beginDate && x.end <= endDate).sort((a,b) => compareDates(a,b))
 
     }
 
@@ -90,7 +90,7 @@ export const getICalEventsFromCalendar = async (url: string, beginDate: Date, en
 
         const {formattedEvents} = await parser(icsAsText, endDate)
 
-        return formattedEvents.filter(x=>x.start > beginDate && x.end < endDate).sort((a,b) => compareDates(a,b))
+        return formattedEvents.filter(x=>x.start > beginDate && x.end <= endDate).sort((a,b) => compareDates(a,b))
 
     }
 
