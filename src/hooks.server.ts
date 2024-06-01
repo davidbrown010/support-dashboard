@@ -16,7 +16,7 @@ export const handle = (async ({ event, resolve }) => {
 
 const appHandler = async (event: RequestEvent<Partial<Record<string, string>>, string | null>, resolve: (event: RequestEvent<Partial<Record<string, string>>, string | null>, opts?: ResolveOptions | undefined) => MaybePromise<Response>) => {
     
-    const nonAuthPages = ['/login', '/register', '/resetPassword']
+    const nonAuthPages = ['/login', '/register', '/resetPassword', '/migration']
     
     //If the page requires authentication.
     if (nonAuthPages.indexOf(event.url.pathname) == -1) {
