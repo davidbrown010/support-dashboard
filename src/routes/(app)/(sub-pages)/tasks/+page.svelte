@@ -1,5 +1,4 @@
 <script lang="ts">
-	import HrefButton from '$lib/components/common/HrefButton.svelte';
 
     import type { PageData } from './$types';
 
@@ -7,7 +6,6 @@
 
 </script>
 tasks
-<HrefButton url="/" activeColor="cyan">Home</HrefButton>
 
 {#await data.streaming.tasks}
    Loading... 

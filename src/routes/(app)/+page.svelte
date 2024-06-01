@@ -14,6 +14,7 @@ Welcome back {data.user.firstName}!
     <HrefButton url="/donors" activeColor="cyan">Donors</HrefButton>
     <HrefButton url="/tasks" activeColor="green">Tasks</HrefButton>
     <HrefButton url="/calendar" activeColor="red">Calendar</HrefButton>
+    <HrefButton url="/calls" activeColor="yellow">Calls</HrefButton>
     <HrefButton url="/settings" activeColor="orange">Settings</HrefButton>
 </div>
 

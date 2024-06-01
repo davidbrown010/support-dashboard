@@ -1,26 +1,32 @@
-import { lucia, type GlobalDatabaseUserAttributes } from "lucia";
-import { sveltekit } from "lucia/middleware";
+import { Lucia, TimeSpan } from "lucia";
 import { dev } from "$app/environment";
-import { planetscale } from "@lucia-auth/adapter-mysql";
-import { connection } from "$lib/server/db/drizzle";
+import { DrizzlePostgreSQLAdapter } from "@lucia-auth/adapter-drizzle"
+import { db } from "../db/drizzle";
+import { sessionsTable, usersTable } from "../db/users/schema";
 
-export const auth = lucia({
-    adapter: planetscale(connection, {
-		user: "users",
-		key: "user_keys",
-		session: "user_sessions"
-	}),
-	env: dev ? "DEV" : "PROD",
-	middleware: sveltekit(),
-    getUserAttributes: (userData: GlobalDatabaseUserAttributes) => {
-        
-        return {
-            username: userData.username,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            userClass: userData.userClass
-        }
-    }
+const adapter = new DrizzlePostgreSQLAdapter(db, sessionsTable, usersTable);
+
+export const lucia = new Lucia(adapter, {
+	sessionCookie: {
+		attributes: {
+			secure: !dev
+		}
+	},
+    sessionExpiresIn: new TimeSpan(2, "w"), // 2 weeks
+	getUserAttributes: (attributes) => {
+		return {
+			username: attributes.username,
+            firstName: attributes.firstName,
+            lastName: attributes.lastName,
+            userClass: attributes.userClass
+		};
+	}
 });
 
-export type Auth = typeof auth;
+declare module "lucia" {
+	interface Register {
+		Lucia: typeof lucia;
+		DatabaseUserAttributes: Lucia.DatabaseUserAttributes;
+	}
+}
+

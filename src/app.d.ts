@@ -3,8 +3,8 @@
 declare global {
 	namespace App {
 		interface Locals {
-			auth: import("lucia").AuthRequest;
-			user: Lucia.DatabaseUserAttributes & { userId: string }
+			user: import("lucia").User | null;
+			session: import("lucia").Session | null;
 		}
 	}
 	interface Window {
@@ -13,15 +13,14 @@ declare global {
 
 	/// <reference types="lucia" />
 	namespace Lucia {
-		type Auth = import("$lib/server/auth/lucia").Auth;
-		type DatabaseUserAttributes = {
-            username: string,
-            firstName: string,
-            lastName: string,
+		interface DatabaseUserAttributes {
+			username: string;
+			firstName: string;
+			lastName: string;
 			userClass: number
-		};
-		type DatabaseSessionAttributes = {};
+		}
 	}
 }
+
 
 export {};

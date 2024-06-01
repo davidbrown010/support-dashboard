@@ -1,27 +1,29 @@
-import { mysqlTable, varchar, int, bigint, serial } from 'drizzle-orm/mysql-core';
+import { pgTable, text, integer, timestamp, serial } from 'drizzle-orm/pg-core';
 
-export const users = mysqlTable('users', {
-	id: varchar('id', { length: 15 }).primaryKey(),
-	username: varchar('username', { length: 55}).unique().notNull(),
-	firstName: varchar('firstName', { length: 255 }).notNull(),
-	lastName: varchar('lastName', { length: 255 }).notNull(),
-	class: int('user_class').notNull().default(3)
+export const usersTable = pgTable('users', {
+	id: text('id').primaryKey(),
+	username: text('username').unique().notNull(),
+	firstName: text('firstName').notNull(),
+	lastName: text('lastName').notNull(),
+	class: integer('user_class').notNull()
+		.default(3)
+		.references(()=>userClassTable.id),
+	passwordHash: text('password_hash').notNull()
+
 });
 
-export const sessions = mysqlTable('user_sessions', {
-	id: varchar('id', { length: 128 }).primaryKey(),
-	userId: varchar('user_id', { length: 15 }).notNull(),
-	activeExpires: bigint('active_expires', {mode: "number"}).notNull(),
-	idleExpires: bigint('idle_expires', {mode: "number"}).notNull()
+export const sessionsTable = pgTable('user_sessions', {
+	id: text('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => usersTable.id, { onDelete: 'cascade' }),
+	expiresAt: timestamp("expires_at", {
+		withTimezone: true,
+		mode: "date"
+	}).notNull()
 });
 
-export const keys = mysqlTable('user_keys', {
-	id: varchar('id', { length: 255 }).primaryKey(),
-	userId: varchar('user_id', { length: 15 }).notNull(),
-	hashedPassword: varchar('hashed_password', { length: 255 })
-});
-
-export const userClass = mysqlTable('user_classes', {
-	id: serial('id'),
-	className: varchar('class_name', {length: 255}).notNull()
+export const userClassTable = pgTable('user_classes', {
+	id: serial('id').primaryKey(),
+	className: text('class_name').notNull().unique()
 })

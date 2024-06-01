@@ -1,10 +1,10 @@
 import { fail, redirect } from "@sveltejs/kit";
-import { auth } from "$lib/server/auth/lucia";
-import { LuciaError } from "lucia"
+import { lucia } from "$lib/server/auth/lucia";
 import type { PageServerLoad, Actions } from "./$types";
-import { DatabaseError } from "@planetscale/database";
 import { z } from "zod"
 import { superValidate } from 'sveltekit-superforms/server'
+import { findValidUser } from "$lib/server/db/users/handler";
+
 
 const loginSchema = z.object({
     username: z.string().min(1),
@@ -12,9 +12,6 @@ const loginSchema = z.object({
 })
 
 export const load: PageServerLoad = async (event) => {
-    const session = await event.locals.auth.validate()
-    if (session) throw redirect(302, "/")
-
     const form = await superValidate(event, loginSchema)
     return { form }
 }
@@ -31,32 +28,35 @@ export const actions: Actions = {
         }
 
         try {
-
-			const key = await auth.useKey(
-				"username",
-				form.data.username.toLowerCase(),
-				form.data.password
-			);
-			const session = await auth.createSession({
-				userId: key.userId,
-				attributes: {}
-			});
-			event.locals.auth.setSession(session);
+            const existingUser = await findValidUser(form.data.username, form.data.password)
             
+            if (existingUser == false) {
+                form.errors = { password: ['Incorrect username or password'] }
+                return fail(400, {
+                    form
+                })
+            }
+
+            const session = await lucia.createSession(existingUser.id, {});
+            const sessionCookie = lucia.createSessionCookie(session.id);
+            event.cookies.set(sessionCookie.name, sessionCookie.value, {
+                path: ".",
+                ...sessionCookie.attributes
+            });
 
 		} catch (e) {
 
             console.log(e)
 
-			if ( e instanceof LuciaError &&
-				(e.message === "AUTH_INVALID_KEY_ID" ||
-					e.message === "AUTH_INVALID_PASSWORD")
-			) {
-                form.errors = { password: ['Incorrect username or password'] }
-                return fail(400, {
-                    form
-                })
-			}
+			// if ( e instanceof LuciaError &&
+			// 	(e.message === "AUTH_INVALID_KEY_ID" ||
+			// 		e.message === "AUTH_INVALID_PASSWORD")
+			// ) {
+            //     form.errors = { password: ['Incorrect username or password'] }
+            //     return fail(400, {
+            //         form
+            //     })
+			// }
 			
             form.errors = { password: ['an unknown error occurred'] }
             return fail(500, {

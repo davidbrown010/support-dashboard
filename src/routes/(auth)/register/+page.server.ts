@@ -1,9 +1,10 @@
-import { fail, redirect } from "@sveltejs/kit";
-import { auth } from "$lib/server/auth/lucia";
+import { fail, redirect} from "@sveltejs/kit";
+import { lucia } from "$lib/server/auth/lucia";
 import type { PageServerLoad, Actions } from "./$types";
-import { DatabaseError } from "@planetscale/database";
 import { z } from "zod"
 import { superValidate } from 'sveltekit-superforms/server'
+import { createNewUser } from "$lib/server/db/users/handler";
+
 
 const newUserSchema = z.object({
     firstName: z.string().min(1),
@@ -13,9 +14,6 @@ const newUserSchema = z.object({
 })
 
 export const load: PageServerLoad = async (event) => {
-    const session = await event.locals.auth.validate()
-    if (session) throw redirect(302, "/")
-
     const form = await superValidate(event, newUserSchema)
     return { form }
 }
@@ -32,52 +30,43 @@ export const actions: Actions = {
         }
 
         try {
-            const user = await auth.createUser({
-                key: {
-                    providerId: "username",
-                    providerUserId: form.data.username.toLowerCase(),
-                    password: form.data.password
-                },
-                attributes: {
-                    username: form.data.username,
-                    firstName: form.data.firstName,
-                    lastName: form.data.lastName
-                }
+            const newUser = await createNewUser(form.data.username, form.data.firstName.toLowerCase(), form.data.lastName.toLowerCase(), form.data.password)
+
+            const session = await lucia.createSession(newUser.userId, {});
+            const sessionCookie = lucia.createSessionCookie(session.id);
+            event.cookies.set(sessionCookie.name, sessionCookie.value, {
+                path: ".",
+                ...sessionCookie.attributes
             });
 
-            try {
-                const session = await auth.createSession({
-                    userId: user.userId,
-                    attributes: {}
-                });
-
-                event.locals.auth.setSession(session);
-
-            }
-            catch (e) {
-                throw new Error("redirect:/")
-            }
         }
         catch (e) {
 
             console.log(e)
 
-            if (e instanceof DatabaseError &&
-                e.message.includes("Duplicate entry") &&
-                e.message.includes("username_unique")
-            ) {
-                form.errors = { username: ['username already taken'] }
-                return fail(400, {
-                    form
-                })
-            }
+            // if (e instanceof DatabaseError &&
+            //     e.message.includes("Duplicate entry") &&
+            //     e.message.includes("username_unique")
+            // ) {
+            //     form.errors = { username: ['username already taken'] }
+            //     return fail(400, {
+            //         form
+            //     })
+            // }
+
+            // if (e instanceof Error &&
+            //     e.message == "redirect:/") {
+            //     throw redirect(302, encodeURI(`/login?message=there was a problem logging you in, please try again`));
+            // }
 
             if (e instanceof Error &&
-                e.message == "redirect:/") {
-                throw redirect(302, encodeURI(`/login?message=there was a problem logging you in, please try again`));
+                e.message == "username taken") {
+                form.errors = { username: ['username is already taken'] }
             }
-
-            form.errors = { password: ['an unknown error occurred'] }
+            else {
+                form.errors = { password: ['an unknown error occurred'] }
+            }
+            
             return fail(500, {
                 form
             })

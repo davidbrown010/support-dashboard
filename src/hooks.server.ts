@@ -1,13 +1,13 @@
 import { redirect, type Handle, json, type RequestEvent, type ResolveOptions, type MaybePromise } from '@sveltejs/kit';
-import { auth } from "$lib/server/auth/lucia";
+import { lucia } from "$lib/server/auth/lucia";
 import { validateApiKey } from "$lib/server/auth/api_keys";
 
 export const handle = (async ({ event, resolve }) => {
 
     redirectHandler(event, resolve)
     
-    if (event.url.pathname.includes("/api/")) return apiHandler(event, resolve)
-    else return appHandler(event, resolve)
+    // if (event.url.pathname.includes("/api/")) return apiHandler(event, resolve)
+     return appHandler(event, resolve)
 
 }) satisfies Handle;
 
@@ -15,63 +15,77 @@ export const handle = (async ({ event, resolve }) => {
 
 
 const appHandler = async (event: RequestEvent<Partial<Record<string, string>>, string | null>, resolve: (event: RequestEvent<Partial<Record<string, string>>, string | null>, opts?: ResolveOptions | undefined) => MaybePromise<Response>) => {
-    event.locals.auth = auth.handleRequest(event);
     
     const nonAuthPages = ['/login', '/register', '/resetPassword']
     
+    //If the page requires authentication.
     if (nonAuthPages.indexOf(event.url.pathname) == -1) {
-        let session = await event.locals.auth.validate();
 
-	    if (!session) {
-
-            session = await event.locals.auth.validateBearerToken();
-
-            if (!session) {
-                throw redirect(302, `/login?redirect=${encodeURI(event.url.pathname)}`);
-            }
+        //get the sessionId from cookies
+        const sessionId = event.cookies.get(lucia.sessionCookieName);
+        if (!sessionId) {
+            event.locals.user = null;
+            event.locals.session = null;
+            return resolve(event);
         }
 
-        event.locals.user = {
-            userId: session.user.userId,
-            username: session.user.username,
-            firstName: session.user.firstName,
-            lastName: session.user.lastName,
-            userClass: session.user.userClass
+        const { session, user } = await lucia.validateSession(sessionId);
+        if (session && session.fresh) {
+            const sessionCookie = lucia.createSessionCookie(session.id);
+            event.cookies.set(sessionCookie.name, sessionCookie.value, {
+                path: ".",
+                ...sessionCookie.attributes
+            });
         }
+        if (!session) {
+            const sessionCookie = lucia.createBlankSessionCookie();
+            event.cookies.set(sessionCookie.name, sessionCookie.value, {
+                path: ".",
+                ...sessionCookie.attributes
+            });
+            // throw redirect(302, `/login?redirect=${encodeURI(event.url.pathname)}`);
+        }
+        event.locals.user = user;
+        event.locals.session = session;
+        return resolve(event);
+
     }
 
     const response = await resolve(event);
     
     return response;
+    
+    
+    
 }
 
-const apiHandler = async (event: RequestEvent<Partial<Record<string, string>>, string | null>, resolve: (event: RequestEvent<Partial<Record<string, string>>, string | null>, opts?: ResolveOptions | undefined) => MaybePromise<Response>) => {
-    const authTokenHeader = event.request.headers.get('Authorization')
-    if (!authTokenHeader) return json({status: 403, message: "No authorization provided.."})
+// const apiHandler = async (event: RequestEvent<Partial<Record<string, string>>, string | null>, resolve: (event: RequestEvent<Partial<Record<string, string>>, string | null>, opts?: ResolveOptions | undefined) => MaybePromise<Response>) => {
+//     const authTokenHeader = event.request.headers.get('Authorization')
+//     if (!authTokenHeader) return json({status: 403, message: "No authorization provided.."})
 
-    try {
-        const user = await validateApiKey(authTokenHeader)
+//     try {
+//         const user = await validateApiKey(authTokenHeader)
 
-        if (!user) return json({status: 403, message: "Invalid Authorization"})
+//         if (!user) return json({status: 403, message: "Invalid Authorization"})
 
-        event.locals.user = {
-            userId: user.id,
-            username: user.username,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            userClass: user.class
-        }
+//         event.locals.user = {
+//             userId: user.id,
+//             username: user.username,
+//             firstName: user.firstName,
+//             lastName: user.lastName,
+//             userClass: user.class
+//         }
         
-    } catch (e) {
-        return json({status: 501, message: "Authorization unable to be processed."})
-    }
+//     } catch (e) {
+//         return json({status: 501, message: "Authorization unable to be processed."})
+//     }
 
-    const response = await resolve(event);
+//     const response = await resolve(event);
     
-    return response;
+//     return response;
     
 
-}
+// }
 
 const redirectHandler = (event: RequestEvent<Partial<Record<string, string>>, string | null>, resolve: (event: RequestEvent<Partial<Record<string, string>>, string | null>, opts?: ResolveOptions | undefined) => MaybePromise<Response>) => {
     
